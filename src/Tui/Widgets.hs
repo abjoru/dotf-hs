@@ -4,16 +4,19 @@ module Tui.Widgets (
   bundleTab
 ) where
 
-import           Brick                      (Padding (Max), Widget, emptyWidget,
-                                             padLeft, str, vBox, vLimit,
-                                             withAttr, withBorderStyle, (<=>))
-import           Brick.Widgets.Border       (border)
-import           Brick.Widgets.Border.Style (unicodeBold)
-import           Brick.Widgets.Center       (hCenter, vCenter)
+import           Brick                (Padding (Max), Widget, emptyWidget,
+                                       padLeft, str, vBox, withAttr, (<+>),
+                                       (<=>))
+import           Brick.Widgets.Border (borderWithLabel)
+import           Brick.Widgets.List   as L
 
-import           Tui.Popup                  (renderPopup)
-import           Tui.State                  (RName, State (..), Tab (..))
-import           Tui.Theme                  (attrTab, attrTabFocus)
+import           Data.Dotf            (TrackedType (Tracked))
+
+import           Tui.Popup            (renderPopup)
+import qualified Tui.State            as S
+import           Tui.State            (RName, State (..), Tab (..), hasFocus)
+import           Tui.Theme            (attrAppName, attrTab, attrTabFocus,
+                                       attrTitle, attrTitleFocus)
 
 ui :: State -> [Widget RName]
 ui st = maybe [drawUi] (\p -> [renderPopup p, drawUi]) (_popup st)
@@ -22,18 +25,30 @@ ui st = maybe [drawUi] (\p -> [renderPopup p, drawUi]) (_popup st)
                    BundleTab  -> bundleTab st
 
 dotfileTab :: State -> Widget RName
-dotfileTab _ = emptyWidget
+dotfileTab s = tabComp <+> (trackedComp <=> untrackedComp)
+  where tabComp        = tabLine DotfileTab "DotF 1.0"
+        trackedTitle   = title "Tracked" $ hasFocus S.Tracked s
+        untrackedTitle = title "Untracked" $ hasFocus S.Untracked s
+        trackedComp    = borderWithLabel trackedTitle (trackedList $ _tracked s)
+        untrackedComp  = borderWithLabel untrackedTitle (untrackedList $ _untracked s)
+
+trackedList :: L.List RName TrackedType -> Widget RName
+trackedList _ = emptyWidget
+
+untrackedList :: L.List RName FilePath -> Widget RName
+untrackedList _ = emptyWidget
 
 bundleTab :: State -> Widget RName
 bundleTab _ = emptyWidget
 
-title :: String -> Widget RName
-title t = withBorderStyle unicodeBold . border . vLimit 1 . vCenter . hCenter . vBox $ [str t]
-
-tabSelector :: [Tab] -> Tab -> Widget RName
-tabSelector tabs selected = vBox $ map renderTab tabs
+tabSelector :: Tab -> Widget RName
+tabSelector selected = vBox $ map renderTab [DotfileTab, BundleTab]
   where renderTab t | selected == t = withAttr attrTabFocus $ str $ show t
                     | otherwise     = withAttr attrTab $ str $ show t
 
-tabLine :: [Tab] -> Tab -> String -> Widget RName
-tabLine ts t n = title n <=> padLeft Max (tabSelector ts t)
+tabLine :: Tab -> String -> Widget RName
+tabLine t n = tabSelector t <=> padLeft Max (withAttr attrAppName $ str n)
+
+title :: String -> Bool -> Widget RName
+title txt True  = withAttr attrTitleFocus $ str txt
+title txt False = withAttr attrTitle $ str txt

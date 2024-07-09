@@ -6,7 +6,8 @@ module Tui.Theme (
   attrTitle,
   attrTitleFocus,
   attrTab,
-  attrTabFocus
+  attrTabFocus,
+  attrAppName
 ) where
 
 import           Brick                (AttrName, attrName, fg, on)
@@ -15,9 +16,9 @@ import qualified Brick.Widgets.Border as B
 import qualified Brick.Widgets.Dialog as D
 import qualified Brick.Widgets.Edit   as E
 import qualified Brick.Widgets.List   as L
-import           Graphics.Vty         (black, bold, brightBlack, brightMagenta,
-                                       brightWhite, brightYellow, underline,
-                                       white, withStyle, yellow)
+import           Graphics.Vty         (black, bold, brightBlack, brightCyan,
+                                       brightMagenta, brightWhite, brightYellow,
+                                       underline, white, withStyle, yellow)
 
 theme :: Theme
 theme = newTheme
@@ -37,6 +38,7 @@ theme = newTheme
   , (attrTitleFocus, withStyle (fg yellow) bold)
   , (attrTab, fg brightWhite)
   , (attrTabFocus, withStyle (fg white) bold)
+  , (attrAppName, withStyle (fg brightCyan) bold)
   ]
 
 attrKey :: AttrName
@@ -59,3 +61,6 @@ attrTab = attrName "tab"
 
 attrTabFocus :: AttrName
 attrTabFocus = attrName "tab-focus"
+
+attrAppName :: AttrName
+attrAppName = attrName "app-name"
