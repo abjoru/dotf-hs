@@ -6,12 +6,12 @@ cabal-version: 2.2
 
 name:           dotf-hs
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/dotf-hs#readme>
-homepage:       https://github.com/githubuser/dotf-hs#readme
-bug-reports:    https://github.com/githubuser/dotf-hs/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2024 Author name here
+description:    Please see the README on GitHub at <https://github.com/abjoru/dotf-hs#readme>
+homepage:       https://github.com/abjoru/dotf-hs#readme
+bug-reports:    https://github.com/abjoru/dotf-hs/issues
+author:         Andreas Bjoru
+maintainer:     andreas.bjoru@gmail.com
+copyright:      2024 Andreas Bjoru
 license:        BSD-3-Clause
 license-file:   LICENSE
 build-type:     Simple
@@ -21,7 +21,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/dotf-hs
+  location: https://github.com/abjoru/dotf-hs
 
 library
   exposed-modules:
@@ -30,12 +30,16 @@ library
       Data.Dotf.Bundles
       Data.Dotf.Os
       Lib
-      Tui.FileBrowserDemo
-      Tui.LayerDemo
-      Tui.ListViDemo
-      Tui.SuspendAndResumeDemo
-      Tui.TableDemo
-      Tui.ThemeDemo
+      Tui.Demo.DialogDemo
+      Tui.Demo.FileBrowserDemo
+      Tui.Demo.LayerDemo
+      Tui.Demo.ListViDemo
+      Tui.Demo.SuspendAndResumeDemo
+      Tui.Demo.TableDemo
+      Tui.Demo.ThemeDemo
+      Tui.Popup
+      Tui.State
+      Tui.Theme
       Tui.Widgets
   other-modules:
       Paths_dotf_hs

@@ -1,4 +1,4 @@
-module Tui.ListViDemo (listViDemo) where
+module Tui.Demo.ListViDemo (listViDemo) where
 
 import           Control.Monad        (void)
 import           Control.Monad.State  (modify)

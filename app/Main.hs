@@ -1,16 +1,18 @@
 module Main (main) where
 
-import           Data.Dotf                (Bundle)
-import qualified Data.Yaml                as Y
-import           Tui.FileBrowserDemo      (fileBrowserDemo)
-import           Tui.LayerDemo            (layerDemo)
-import           Tui.ListViDemo           (listViDemo)
-import           Tui.SuspendAndResumeDemo (suspendAndResumeDemo)
-import           Tui.TableDemo            (tableDemo)
-import           Tui.ThemeDemo            (themeDemo)
+import           Data.Dotf                     (Bundle)
+import qualified Data.Yaml                     as Y
+import           Tui.Demo.DialogDemo           (dialogDemo)
+import           Tui.Demo.FileBrowserDemo      (fileBrowserDemo)
+import           Tui.Demo.LayerDemo            (layerDemo)
+import           Tui.Demo.ListViDemo           (listViDemo)
+import           Tui.Demo.SuspendAndResumeDemo (suspendAndResumeDemo)
+import           Tui.Demo.TableDemo            (tableDemo)
+import           Tui.Demo.ThemeDemo            (themeDemo)
 
 main :: IO ()
-main = layerDemo
+main = dialogDemo
+--layerDemo
 --themeDemo
 --tableDemo
 --suspendAndResumeDemo

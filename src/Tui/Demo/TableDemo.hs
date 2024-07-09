@@ -1,8 +1,8 @@
-module Tui.TableDemo (tableDemo) where
+module Tui.Demo.TableDemo (tableDemo) where
 
-import Brick
-import Brick.Widgets.Table
-import Brick.Widgets.Center (center)
+import           Brick
+import           Brick.Widgets.Center (center)
+import           Brick.Widgets.Table
 
 ui :: Widget ()
 ui = center $ renderTable leftTable <+>

@@ -1,5 +1,5 @@
 {-# LANGUAGE GADTs #-}
-module Tui.SuspendAndResumeDemo (suspendAndResumeDemo) where
+module Tui.Demo.SuspendAndResumeDemo (suspendAndResumeDemo) where
 
 import           Control.Monad      (void)
 import qualified Graphics.Vty       as V

@@ -1,4 +1,4 @@
-module Tui.FileBrowserDemo (fileBrowserDemo) where
+module Tui.Demo.FileBrowserDemo (fileBrowserDemo) where
 
 import           Brick                     (Padding (Pad), Widget, emptyWidget,
                                             fg, hLimit, padTop, txt, vBox,

@@ -1,47 +1,39 @@
-module Tui.Widgets where
+module Tui.Widgets (
+  ui,
+  dotfileTab,
+  bundleTab
+) where
 
-import           Brick                      (ViewportType (Both, Vertical),
-                                             Widget, hLimit, joinBorders, str,
-                                             vBox, vLimit, viewport,
-                                             withBorderStyle, (<+>))
-import           Brick.Types                (ViewportType (Horizontal))
-import           Brick.Widgets.Border       (border, borderWithLabel, hBorder,
-                                             vBorder)
-import           Brick.Widgets.Border.Style (unicode, unicodeBold)
-import           Brick.Widgets.Center       (center, hCenter, vCenter)
-import           Brick.Widgets.Core         (hBox)
+import           Brick                      (Padding (Max), Widget, emptyWidget,
+                                             padLeft, str, vBox, vLimit,
+                                             withAttr, withBorderStyle, (<=>))
+import           Brick.Widgets.Border       (border)
+import           Brick.Widgets.Border.Style (unicodeBold)
+import           Brick.Widgets.Center       (hCenter, vCenter)
 
-data Name = VP1
-          | VP2
-          | VP3
-          deriving (Ord, Show, Eq)
+import           Tui.Popup                  (renderPopup)
+import           Tui.State                  (RName, State (..), Tab (..))
+import           Tui.Theme                  (attrTab, attrTabFocus)
 
-title :: String -> Widget ()
+ui :: State -> [Widget RName]
+ui st = maybe [drawUi] (\p -> [renderPopup p, drawUi]) (_popup st)
+  where drawUi = case _tabSel st of
+                   DotfileTab -> dotfileTab st
+                   BundleTab  -> bundleTab st
+
+dotfileTab :: State -> Widget RName
+dotfileTab _ = emptyWidget
+
+bundleTab :: State -> Widget RName
+bundleTab _ = emptyWidget
+
+title :: String -> Widget RName
 title t = withBorderStyle unicodeBold . border . vLimit 1 . vCenter . hCenter . vBox $ [str t]
 
-sampleUi :: Widget ()
-sampleUi = joinBorders
-         $ withBorderStyle unicode
-         $ borderWithLabel (str "Hello!") (center (str "Left") <+> vBorder <+> center (str "Right"))
+tabSelector :: [Tab] -> Tab -> Widget RName
+tabSelector tabs selected = vBox $ map renderTab tabs
+  where renderTab t | selected == t = withAttr attrTabFocus $ str $ show t
+                    | otherwise     = withAttr attrTab $ str $ show t
 
-sampleUi2 :: Widget Name
-sampleUi2 = center
-          $ border
-          $ hLimit 60
-          $ vLimit 21
-          $ vBox [ pair, hBorder, singleton ]
-
-pair :: Widget Name
-pair = hBox [ viewport VP1 Vertical $
-              vBox $ str "Press up and down array keys" :
-                     str "to scroll this viewport." :
-                     (str <$> [ "Line " <> show i | i <- [3..50::Int] ])
-            , vBorder
-            , viewport VP2 Horizontal $
-              str "Press left and right arrow keys to scroll this viewport."
-            ]
-
-singleton :: Widget Name
-singleton = viewport VP3 Both $
-            vBox $ str "Press ctrl+arrow keys to scroll this viewport horizontally and vertically."
-                 : (str <$> [ "Line " <> show i | i <- [2..25::Int] ])
+tabLine :: [Tab] -> Tab -> String -> Widget RName
+tabLine ts t n = title n <=> padLeft Max (tabSelector ts t)

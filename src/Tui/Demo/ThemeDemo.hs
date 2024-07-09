@@ -1,4 +1,4 @@
-module Tui.ThemeDemo (themeDemo) where
+module Tui.Demo.ThemeDemo (themeDemo) where
 
 import           Brick.AttrMap        (AttrName, attrName)
 import           Brick.Main

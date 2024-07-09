@@ -1,4 +1,4 @@
-module Tui.LayerDemo (layerDemo) where
+module Tui.Demo.LayerDemo (layerDemo) where
 
 import           Brick.AttrMap        (AttrName, attrMap, attrName)
 import qualified Brick.Main           as M
