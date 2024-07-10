@@ -38,6 +38,7 @@ library
       Tui.Demo.SuspendAndResumeDemo
       Tui.Demo.TableDemo
       Tui.Demo.ThemeDemo
+      Tui.Events
       Tui.Popup
       Tui.State
       Tui.Theme

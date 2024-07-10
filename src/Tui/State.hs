@@ -104,6 +104,9 @@ focusL = lens _focus (\s f -> s { _focus = f })
 trackedL :: Lens' State (L.List RName TrackedType)
 trackedL = lens _tracked (\s ts -> s { _tracked = ts })
 
+--trackedSelL :: Lens' State (Maybe FilePath)
+--trackedSelL = 
+
 untrackedL :: Lens' State (L.List RName FilePath)
 untrackedL = lens _untracked (\s us -> s { _untracked = us })
 

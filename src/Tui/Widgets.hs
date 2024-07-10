@@ -9,7 +9,7 @@ import           Brick                (Padding (Max), Widget, emptyWidget,
 import           Brick.Widgets.Border (border, borderWithLabel)
 import qualified Brick.Widgets.List   as L
 
-import           Data.Dotf            (TrackedType (..))
+import           Data.Dotf            (TrackedType (..), trackedFile)
 
 import           Brick.Widgets.Center (hCenter)
 import           Brick.Widgets.Core   (Padding (Pad), hBox, padRight)
@@ -39,15 +39,10 @@ dotfileTab s = tabComp <=> (trackedComp <+> untrackedComp) <=> dotfHelp
 
 trackedList :: L.List RName TrackedType -> Bool -> Widget RName
 trackedList l focus = L.renderList (drawItem focus) focus l
-  where drawItem True True (Tracked fp)   = withAttr attrSelItem $ str fp
-        drawItem True False (Tracked fp)  = withAttr attrItem $ str fp
-        drawItem True True (Staged fp)    = withAttr attrSelItem $ str fp
-        drawItem True False (Staged fp)   = withAttr attrStagedItem $ str fp
-        drawItem True True (Unstaged fp)  = withAttr attrSelItem $ str fp
-        drawItem True False (Unstaged fp) = withAttr attrUnstagedItem $ str fp
-        drawItem _ _ (Tracked fp)         = withAttr attrItem $ str fp
-        drawItem _ _ (Staged fp)          = withAttr attrStagedItem $ str fp
-        drawItem _ _ (Unstaged fp)        = withAttr attrUnstagedItem $ str fp
+  where drawItem True True t       = withAttr attrSelItem $ str (trackedFile t)
+        drawItem _ _ (Tracked fp)  = withAttr attrItem $ str fp
+        drawItem _ _ (Staged fp)   = withAttr attrStagedItem $ str fp
+        drawItem _ _ (Unstaged fp) = withAttr attrUnstagedItem $ str fp
 
 untrackedList :: L.List RName FilePath -> Bool -> Widget RName
 untrackedList l focus = L.renderList (drawItem focus) focus l
@@ -55,7 +50,20 @@ untrackedList l focus = L.renderList (drawItem focus) focus l
         drawItem _ _ fp       = withAttr attrItem $ str fp
 
 dotfHelp :: Widget RName
-dotfHelp = border . hCenter $ str "j/k: up/down  e: edit  q: quit"
+dotfHelp = border . hCenter $
+         ( hCenter $ (tip "j/k:" " up/down  ")
+         <+> (tip "Ctrl+h/l:" " switch left/right  ")
+         <+> (tip "Tab:" " switch focus  ")
+         <+> (tip "q:" " quit")
+         ) <=>
+         ( hCenter $ (tip "e:" " edit  ")
+         <+> (tip "a:" " add modified  ")
+         <+> (tip "c:" " commit  ")
+         <+> (tip "I:" " ignore untracked  ")
+         <+> (tip "T:" " track file  ")
+         <+> (tip "U:" " untrack file")
+         )
+  where tip k v = withAttr attrTitle $ str k <+> (withAttr attrItem $ str v)
 
 bundleTab :: State -> Widget RName
 bundleTab _ = emptyWidget
