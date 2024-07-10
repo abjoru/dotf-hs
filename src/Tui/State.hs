@@ -6,6 +6,7 @@ module Tui.State (
   State(..),
 
   emptyState,
+  sampleState,
   hasFocus,
 
   focusL,
@@ -13,19 +14,18 @@ module Tui.State (
   untrackedL,
   bundlesL,
   ignoreEditL,
-  errorL
+  errorL,
+  tabL
 ) where
 
 import           Brick.Widgets.Edit (Editor, editor)
 import qualified Brick.Widgets.List as L
-import           Data.Dotf          (Bundle, GitError, TrackedType)
-import           Data.Vector        as V
+import           Data.Dotf          (Bundle, GitError,
+                                     TrackedType (Staged, Tracked, Unstaged))
+import qualified Data.Vector        as V
 import           Lens.Micro         (Lens', lens)
 import           Tui.Popup          (Popup)
 
--- Not sure about this one?
--- Do we track specific resources?
--- Would a tab be a viewport in this sense?
 data RName
   = RTrackedList
   | RUntrackedList
@@ -34,15 +34,15 @@ data RName
   deriving (Eq, Ord, Show)
 
 data Focus
-  = Tracked
-  | Untracked
-  | IgnoreDialog
-  | HelpDialog
-  | ErrorDialog
-  | BundleList
-  | PackageTable
-  | GitPackageTable
-  | ScriptList
+  = FTracked
+  | FUntracked
+  | FIgnoreDialog
+  | FHelpDialog
+  | FErrorDialog
+  | FBundleList
+  | FPackageTable
+  | FGitPackageTable
+  | FScriptList
   deriving (Eq, Ord, Show)
 
 data DialogChoice = Ok
@@ -64,19 +64,31 @@ data State = State
   , _ignoreEdit :: Editor String RName
   , _error      :: Maybe GitError
   , _popup      :: Maybe (Popup DialogChoice RName)
-  , _tabSel     :: Tab
+  , _tab        :: Tab
   }
 
 emptyState :: State
 emptyState = State
-  { _focus        = Tracked
+  { _focus        = FTracked
   , _tracked      = L.list RTrackedList V.empty 1
   , _untracked    = L.list RUntrackedList V.empty 1
   , _bundles      = L.list RBundleList V.empty 1
   , _ignoreEdit   = editor RIgnoreEditor Nothing ""
   , _error        = Nothing
   , _popup        = Nothing
-  , _tabSel       = DotfileTab
+  , _tab          = DotfileTab
+  }
+
+sampleState :: State
+sampleState = emptyState
+  { _tracked = L.list RTrackedList (V.fromList [ Tracked "~/.config/dotf/apt.yaml"
+                                               , Tracked "~/.config/dotf/dotf.yaml"
+                                               , Staged "~/.config/dotf/pacman.yaml"
+                                               , Unstaged "~/.config/dotf/brew.yaml"
+                                               ]) 1
+  , _untracked = L.list RUntrackedList (V.fromList [ "~/.cache/nvim/ChatGPT.log"
+                                                   , "~/.cache/nvim/fidget.nvim.log"
+                                                   ]) 1
   }
 
 hasFocus :: Focus -> State -> Bool
@@ -103,3 +115,6 @@ ignoreEditL = lens _ignoreEdit (\s e -> s { _ignoreEdit = e })
 
 errorL :: Lens' State (Maybe GitError)
 errorL = lens _error (\s me -> s { _error = me })
+
+tabL :: Lens' State Tab
+tabL = lens _tab (\s t -> s { _tab = t })

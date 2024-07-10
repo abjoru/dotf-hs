@@ -5,49 +5,68 @@ module Tui.Widgets (
 ) where
 
 import           Brick                (Padding (Max), Widget, emptyWidget,
-                                       padLeft, str, vBox, withAttr, (<+>),
-                                       (<=>))
-import           Brick.Widgets.Border (borderWithLabel)
-import           Brick.Widgets.List   as L
+                                       padLeft, str, withAttr, (<+>), (<=>))
+import           Brick.Widgets.Border (border, borderWithLabel)
+import qualified Brick.Widgets.List   as L
 
-import           Data.Dotf            (TrackedType (Tracked))
+import           Data.Dotf            (TrackedType (..))
 
+import           Brick.Widgets.Center (hCenter)
+import           Brick.Widgets.Core   (Padding (Pad), hBox, padRight)
 import           Tui.Popup            (renderPopup)
-import qualified Tui.State            as S
-import           Tui.State            (RName, State (..), Tab (..), hasFocus)
-import           Tui.Theme            (attrAppName, attrTab, attrTabFocus,
-                                       attrTitle, attrTitleFocus)
+import           Tui.State            (Focus (..), RName, State (..), Tab (..),
+                                       hasFocus)
+import           Tui.Theme            (attrAppName, attrItem, attrSelItem,
+                                       attrStagedItem, attrTab, attrTabFocus,
+                                       attrTitle, attrTitleFocus,
+                                       attrUnstagedItem)
 
 ui :: State -> [Widget RName]
 ui st = maybe [drawUi] (\p -> [renderPopup p, drawUi]) (_popup st)
-  where drawUi = case _tabSel st of
+  where drawUi = case _tab st of
                    DotfileTab -> dotfileTab st
                    BundleTab  -> bundleTab st
 
 dotfileTab :: State -> Widget RName
-dotfileTab s = tabComp <+> (trackedComp <=> untrackedComp)
+dotfileTab s = tabComp <=> (trackedComp <+> untrackedComp) <=> dotfHelp
   where tabComp        = tabLine DotfileTab "DotF 1.0"
-        trackedTitle   = title "Tracked" $ hasFocus S.Tracked s
-        untrackedTitle = title "Untracked" $ hasFocus S.Untracked s
-        trackedComp    = borderWithLabel trackedTitle (trackedList $ _tracked s)
-        untrackedComp  = borderWithLabel untrackedTitle (untrackedList $ _untracked s)
+        trackedTitle   = title " Tracked " $ hasFocus FTracked s
+        untrackedTitle = title " Untracked " $ hasFocus FUntracked s
+        mkTracked      = trackedList (_tracked s) $ hasFocus FTracked s
+        mkUntracked    = untrackedList (_untracked s) $ hasFocus FUntracked s
+        trackedComp    = borderWithLabel trackedTitle mkTracked
+        untrackedComp  = borderWithLabel untrackedTitle mkUntracked
 
-trackedList :: L.List RName TrackedType -> Widget RName
-trackedList _ = emptyWidget
+trackedList :: L.List RName TrackedType -> Bool -> Widget RName
+trackedList l focus = L.renderList (drawItem focus) focus l
+  where drawItem True True (Tracked fp)   = withAttr attrSelItem $ str fp
+        drawItem True False (Tracked fp)  = withAttr attrItem $ str fp
+        drawItem True True (Staged fp)    = withAttr attrSelItem $ str fp
+        drawItem True False (Staged fp)   = withAttr attrStagedItem $ str fp
+        drawItem True True (Unstaged fp)  = withAttr attrSelItem $ str fp
+        drawItem True False (Unstaged fp) = withAttr attrUnstagedItem $ str fp
+        drawItem _ _ (Tracked fp)         = withAttr attrItem $ str fp
+        drawItem _ _ (Staged fp)          = withAttr attrStagedItem $ str fp
+        drawItem _ _ (Unstaged fp)        = withAttr attrUnstagedItem $ str fp
 
-untrackedList :: L.List RName FilePath -> Widget RName
-untrackedList _ = emptyWidget
+untrackedList :: L.List RName FilePath -> Bool -> Widget RName
+untrackedList l focus = L.renderList (drawItem focus) focus l
+  where drawItem True True fp = withAttr attrSelItem $ str fp
+        drawItem _ _ fp       = withAttr attrItem $ str fp
+
+dotfHelp :: Widget RName
+dotfHelp = border . hCenter $ str "j/k: up/down  e: edit  q: quit"
 
 bundleTab :: State -> Widget RName
 bundleTab _ = emptyWidget
 
 tabSelector :: Tab -> Widget RName
-tabSelector selected = vBox $ map renderTab [DotfileTab, BundleTab]
-  where renderTab t | selected == t = withAttr attrTabFocus $ str $ show t
-                    | otherwise     = withAttr attrTab $ str $ show t
+tabSelector selected = padLeft (Pad 1) . hBox $ map renderTab [DotfileTab, BundleTab]
+  where renderTab t | selected == t = withAttr attrTabFocus $ padRight (Pad 1) $ str $ show t
+                    | otherwise     = withAttr attrTab $ padRight (Pad 1) $ str $ show t
 
 tabLine :: Tab -> String -> Widget RName
-tabLine t n = tabSelector t <=> padLeft Max (withAttr attrAppName $ str n)
+tabLine t n = tabSelector t <+> (padLeft Max . padRight (Pad 1) $ withAttr attrAppName (str n))
 
 title :: String -> Bool -> Widget RName
 title txt True  = withAttr attrTitleFocus $ str txt

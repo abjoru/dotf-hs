@@ -21,3 +21,4 @@ cabal.project.local
 cabal.project.local~
 .HFT/
 .ghc.environment.*
+tags

@@ -10,7 +10,9 @@ module Data.Dotf (
   ErrorOrTracked,
   ErrorOrFilePaths,
 
-  Answer
+  Answer,
+
+  trackedFile
 ) where
 
 import qualified Data.ByteString.Lazy       as B
@@ -52,6 +54,11 @@ instance Read Answer where
     "no"   -> [(No, [])]
     "n"    -> [(No, [])]
     _      -> [(No, [])]
+
+trackedFile :: TrackedType -> FilePath
+trackedFile (Tracked fp)  = fp
+trackedFile (Staged fp)   = fp
+trackedFile (Unstaged fp) = fp
 
 -- Example: Move to commands in separate func!
 askNewBareRepo :: FilePath -> IO Answer

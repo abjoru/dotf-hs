@@ -2,6 +2,7 @@ module Main (main) where
 
 import           Data.Dotf                     (Bundle)
 import qualified Data.Yaml                     as Y
+import           Tui                           (tui)
 import           Tui.Demo.DialogDemo           (dialogDemo)
 import           Tui.Demo.FileBrowserDemo      (fileBrowserDemo)
 import           Tui.Demo.LayerDemo            (layerDemo)
@@ -11,7 +12,8 @@ import           Tui.Demo.TableDemo            (tableDemo)
 import           Tui.Demo.ThemeDemo            (themeDemo)
 
 main :: IO ()
-main = dialogDemo
+main = tui
+--dialogDemo
 --layerDemo
 --themeDemo
 --tableDemo

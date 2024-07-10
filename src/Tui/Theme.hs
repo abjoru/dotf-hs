@@ -7,7 +7,12 @@ module Tui.Theme (
   attrTitleFocus,
   attrTab,
   attrTabFocus,
-  attrAppName
+  attrAppName,
+  attrSelItem,
+  attrSelUnfocusItem,
+  attrItem,
+  attrStagedItem,
+  attrUnstagedItem
 ) where
 
 import           Brick                (AttrName, attrName, fg, on)
@@ -16,13 +21,17 @@ import qualified Brick.Widgets.Border as B
 import qualified Brick.Widgets.Dialog as D
 import qualified Brick.Widgets.Edit   as E
 import qualified Brick.Widgets.List   as L
-import           Graphics.Vty         (black, bold, brightBlack, brightCyan,
-                                       brightMagenta, brightWhite, brightYellow,
+import           Graphics.Vty         (Color, black, bold, brightBlack,
+                                       brightCyan, brightMagenta, brightWhite,
+                                       brightYellow, green, red, rgbColor,
                                        underline, white, withStyle, yellow)
+
+absBlack :: Color
+absBlack = rgbColor (0 :: Integer) 0 0
 
 theme :: Theme
 theme = newTheme
-  (white `on` brightBlack)
+  (white `on` absBlack)
   [ (L.listAttr, fg brightWhite)
   , (L.listSelectedAttr, fg brightWhite)
   , (L.listSelectedFocusedAttr, black `on` brightYellow)
@@ -39,6 +48,10 @@ theme = newTheme
   , (attrTab, fg brightWhite)
   , (attrTabFocus, withStyle (fg white) bold)
   , (attrAppName, withStyle (fg brightCyan) bold)
+  , (attrSelItem, black `on` yellow)
+  , (attrItem, fg brightWhite)
+  , (attrStagedItem, fg green)
+  , (attrUnstagedItem, fg red)
   ]
 
 attrKey :: AttrName
@@ -64,3 +77,18 @@ attrTabFocus = attrName "tab-focus"
 
 attrAppName :: AttrName
 attrAppName = attrName "app-name"
+
+attrSelItem :: AttrName
+attrSelItem = attrName "selected-item"
+
+attrSelUnfocusItem :: AttrName
+attrSelUnfocusItem = attrName "selected-item-unfocused"
+
+attrItem :: AttrName
+attrItem = attrName "item"
+
+attrStagedItem :: AttrName
+attrStagedItem = attrName "staged-item"
+
+attrUnstagedItem :: AttrName
+attrUnstagedItem = attrName "unstaged-item"

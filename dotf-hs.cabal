@@ -30,6 +30,7 @@ library
       Data.Dotf.Bundles
       Data.Dotf.Os
       Lib
+      Tui
       Tui.Demo.DialogDemo
       Tui.Demo.FileBrowserDemo
       Tui.Demo.LayerDemo
