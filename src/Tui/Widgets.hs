@@ -15,7 +15,7 @@ import           Brick.Widgets.Center (hCenter)
 import           Brick.Widgets.Core   (Padding (Pad), hBox, padRight)
 import           Tui.Popup            (renderPopup)
 import           Tui.State            (Focus (..), RName, State (..), Tab (..),
-                                       hasFocus)
+                                       countTracked, countUntracked, hasFocus)
 import           Tui.Theme            (attrAppName, attrItem, attrSelItem,
                                        attrStagedItem, attrTab, attrTabFocus,
                                        attrTitle, attrTitleFocus,
@@ -30,8 +30,10 @@ ui st = maybe [drawUi] (\p -> [renderPopup p, drawUi]) (_popup st)
 dotfileTab :: State -> Widget RName
 dotfileTab s = tabComp <=> (trackedComp <+> untrackedComp) <=> dotfHelp
   where tabComp        = tabLine DotfileTab "DotF 1.0"
-        trackedTitle   = title " Tracked " $ hasFocus FTracked s
-        untrackedTitle = title " Untracked " $ hasFocus FUntracked s
+        tcount         = countTracked s
+        ucount         = countUntracked s
+        trackedTitle   = title (" Tracked " ++ show tcount ++ " ") $ hasFocus FTracked s
+        untrackedTitle = title (" Untracked " ++ show ucount ++ " ") $ hasFocus FUntracked s
         mkTracked      = trackedList (_tracked s) $ hasFocus FTracked s
         mkUntracked    = untrackedList (_untracked s) $ hasFocus FUntracked s
         trackedComp    = borderWithLabel trackedTitle mkTracked
@@ -51,22 +53,24 @@ untrackedList l focus = L.renderList (drawItem focus) focus l
 
 dotfHelp :: Widget RName
 dotfHelp = border . hCenter $
-         ( hCenter $ (tip "j/k:" " up/down  ")
-         <+> (tip "Ctrl+h/l:" " switch left/right  ")
-         <+> (tip "Tab:" " switch focus  ")
-         <+> (tip "q:" " quit")
-         ) <=>
-         ( hCenter $ (tip "e:" " edit  ")
-         <+> (tip "a:" " add modified  ")
-         <+> (tip "c:" " commit  ")
-         <+> (tip "I:" " ignore untracked  ")
-         <+> (tip "T:" " track file  ")
-         <+> (tip "U:" " untrack file")
-         )
-  where tip k v = withAttr attrTitle $ str k <+> (withAttr attrItem $ str v)
+         hCenter (tip "j/k:" " Up/Down  "
+         <+> tip "Ctrl+h/l:" " Switch Left/Right  "
+         <+> tip "Tab:" " Switch Focus  "
+         <+> tip "q:" " Quit") <=>
+         hCenter (tip "e:" " Edit  "
+         <+> tip "a:" " Show All  "
+         <+> tip "c:" " Commit  "
+         <+> tip "A/R:" " Add/Remove File  "
+         <+> tip "I:" " Ignore Untracked  ")
+  where tip k v = withAttr attrTitle $ str k <+> withAttr attrItem (str v)
 
 bundleTab :: State -> Widget RName
-bundleTab _ = emptyWidget
+bundleTab s = tabComp <=> ((blComp <=> scComp) <+> (pkComp <=> gtComp)) <=> dotfHelp
+  where tabComp = tabLine BundleTab "DotF 1.0"
+        blComp = borderWithLabel (str " Bundles ") $ str "my bundle list"
+        scComp = borderWithLabel (str " Scripts ") $ str "my script list"
+        pkComp = borderWithLabel (str " Packages ") $ str "my package list"
+        gtComp = borderWithLabel (str " Git Packages ") $ str "my git package list"
 
 tabSelector :: Tab -> Widget RName
 tabSelector selected = padLeft (Pad 1) . hBox $ map renderTab [DotfileTab, BundleTab]

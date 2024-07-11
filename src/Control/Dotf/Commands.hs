@@ -1,6 +1,9 @@
 module Control.Dotf.Commands (
   listTracked,
+  listTrackedAll,
   listUntracked,
+  unsafeListTracked,
+  unsafeListUntracked,
   stageFile,
   unstageFile,
   untrackFile,
@@ -31,19 +34,36 @@ import           System.Process.Typed       (ProcessConfig, proc, readProcess,
 
 type ReadProcessResult = (ExitCode, B.ByteString, B.ByteString)
 
-listTracked :: IO ErrorOrTracked
-listTracked = do
-  home    <- getHomeDirectory
-  tracked <- fmap (map Tracked) . processFileListResult home <$> execGitTracked
-  staged  <- fmap (map Staged) . processFileListResult home <$> execGitTrackedStaged
-  ustaged <- fmap (map Unstaged) . processFileListResult home <$> execGitTrackedUnstaged
+listTrackedAll :: IO ErrorOrTracked
+listTrackedAll = do
+  tracked <- fmap (map Tracked) . processFileListResult <$> execGitTracked
+  staged  <- fmap (map Staged) . processFileListResult <$> execGitTrackedStaged
+  ustaged <- fmap (map Unstaged) . processFileListResult <$> execGitTrackedUnstaged
   return $ comb <$> tracked <*> staged <*> ustaged
   where comb a b c = a ++ b ++ c
 
+listTracked :: IO ErrorOrTracked
+listTracked = do
+  staged <- fmap (map Staged) . processFileListResult<$> execGitTrackedStaged
+  unstaged <- fmap (map Unstaged) . processFileListResult <$> execGitTrackedUnstaged
+  return $ comb <$> staged <*> unstaged
+  where comb a b = a ++ b
+
+unsafeListTracked :: Bool -> IO [TrackedType]
+unsafeListTracked True = fmap ignoreError listTrackedAll
+unsafeListTracked False = fmap ignoreError listTracked
+
+ignoreError :: ErrorOrTracked -> [TrackedType]
+ignoreError (Right xs) = xs
+ignoreError (Left _) = []
+
 listUntracked :: IO ErrorOrFilePaths
-listUntracked = do
-  home <- getHomeDirectory
-  processFileListResult home <$> execGitUntracked
+listUntracked = processFileListResult <$> execGitUntracked
+
+unsafeListUntracked :: IO [FilePath]
+unsafeListUntracked = fmap unwrapList listUntracked
+  where unwrapList (Right xs) = xs
+        unwrapList (Left _)   = []
 
 stageFile :: FilePath -> IO ExitCode
 stageFile = execGitStageFile
@@ -134,10 +154,9 @@ bare args = do
          $ proc "git"
          $ [[i|--git-dir=#{home </> ".dotf"}|], [i|--work-tree=#{home}|]] ++ args
 
-processFileListResult :: FilePath -> ReadProcessResult -> ErrorOrFilePaths
-processFileListResult _ (ExitFailure cd, _, err) = Left $ GitError cd err
-processFileListResult h (ExitSuccess, out, _) = Right $ fmap buildPath (C8.lines out)
-  where buildPath l = h </> C8.unpack l
+processFileListResult :: ReadProcessResult -> ErrorOrFilePaths
+processFileListResult (ExitFailure cd, _, err) = Left $ GitError cd err
+processFileListResult (ExitSuccess, out, _) = Right $ fmap C8.unpack (C8.lines out)
 
 processStringResult :: ReadProcessResult -> ErrorOrString
 processStringResult (ExitFailure cd, _, err) = Left $ GitError cd err

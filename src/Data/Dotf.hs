@@ -1,4 +1,3 @@
-{-# LANGUAGE GADTs #-}
 module Data.Dotf (
   module Data.Dotf.Bundles,
   module Data.Dotf.Os,
@@ -24,10 +23,10 @@ import           Data.Dotf.Os
 
 import           System.IO                  (hFlush, stdout)
 
-data TrackedType where
-  Tracked  :: FilePath -> TrackedType
-  Staged   :: FilePath -> TrackedType
-  Unstaged :: FilePath -> TrackedType
+data TrackedType
+  = Tracked FilePath
+  | Staged FilePath
+  | Unstaged FilePath
   deriving (Show, Eq)
 
 data GitError = GitError {
