@@ -19,6 +19,7 @@ module Tui.State (
   untrackedL,
   bundlesL,
   ignoreEditL,
+  ignoreL,
   errorL,
   tabL,
   showAllTrackedL
@@ -69,6 +70,7 @@ data State = State
   , _untracked      :: L.List RName FilePath
   , _bundles        :: L.List RName Bundle
   , _ignoreEdit     :: Editor String RName
+  , _ignore         :: Bool
   , _error          :: Maybe GitError
   , _popup          :: Maybe (Popup DialogChoice RName)
   , _tab            :: Tab
@@ -82,6 +84,7 @@ emptyState = State
   , _untracked      = L.list RUntrackedList V.empty 1
   , _bundles        = L.list RBundleList V.empty 1
   , _ignoreEdit     = editor RIgnoreEditor Nothing ""
+  , _ignore         = False
   , _error          = Nothing
   , _popup          = Nothing
   , _tab            = DotfileTab
@@ -142,6 +145,9 @@ bundlesL = lens _bundles (\s bs -> s { _bundles = bs })
 
 ignoreEditL :: Lens' State (Editor String RName)
 ignoreEditL = lens _ignoreEdit (\s e -> s { _ignoreEdit = e })
+
+ignoreL :: Lens' State Bool
+ignoreL = lens _ignore (\s i -> s { _ignore = i })
 
 errorL :: Lens' State (Maybe GitError)
 errorL = lens _error (\s me -> s { _error = me })

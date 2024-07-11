@@ -11,7 +11,7 @@ import           Data.Dotf             (TrackedType)
 import qualified Data.Vector           as V
 import           Tui.Events            (appEvent)
 import           Tui.State             (RName (..),
-                                        State (_tracked, _untracked),
+                                        State (_tracked, _untracked, _ignore),
                                         emptyState)
 import           Tui.Theme             (theme)
 import           Tui.Widgets           (ui)
@@ -30,6 +30,7 @@ initState = do
   untracked <- tryListUntracked
   return $ emptyState { _tracked = L.list RTrackedList (V.fromList tracked) 1
                       , _untracked = L.list RUntrackedList (V.fromList untracked) 1
+                      --, _ignore = True
                       }
 
 tryListTracked :: IO [TrackedType]

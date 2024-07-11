@@ -4,8 +4,9 @@ module Tui.Widgets (
   bundleTab
 ) where
 
+import Data.Text.Zipper (stringZipper)
 import           Brick                (Padding (Max), Widget, emptyWidget,
-                                       padLeft, str, withAttr, (<+>), (<=>))
+                                       padLeft, str, withAttr, (<+>), (<=>), hLimitPercent, vLimit)
 import           Brick.Widgets.Border (border, borderWithLabel)
 import qualified Brick.Widgets.List   as L
 
@@ -13,9 +14,11 @@ import           Data.Dotf            (TrackedType (..), trackedFile)
 
 import           Brick.Widgets.Center (hCenter)
 import           Brick.Widgets.Core   (Padding (Pad), hBox, padRight)
+import Brick.Widgets.Edit (renderEditor)
+import Lens.Micro
 import           Tui.Popup            (renderPopup)
 import           Tui.State            (Focus (..), RName, State (..), Tab (..),
-                                       countTracked, countUntracked, hasFocus)
+                                       countTracked, countUntracked, hasFocus, ignoreEditL)
 import           Tui.Theme            (attrAppName, attrItem, attrSelItem,
                                        attrStagedItem, attrTab, attrTabFocus,
                                        attrTitle, attrTitleFocus,
@@ -28,8 +31,11 @@ ui st = maybe [drawUi] (\p -> [renderPopup p, drawUi]) (_popup st)
                    BundleTab  -> bundleTab st
 
 dotfileTab :: State -> Widget RName
-dotfileTab s = tabComp <=> (trackedComp <+> untrackedComp) <=> dotfHelp
-  where tabComp        = tabLine DotfileTab "DotF 1.0"
+dotfileTab s = drawUi $ _ignore s
+--tabComp <=> (trackedComp <+> untrackedComp) <=> dotfHelp
+  where drawUi False   = tabComp <=> (trackedComp <+> untrackedComp) <=> dotfHelp
+        drawUi True    = tabComp <=> (trackedComp <+> untrackedComp) <=> (ignoreFile s) <=> dotfHelp
+        tabComp        = tabLine DotfileTab "DotF 1.0"
         tcount         = countTracked s
         ucount         = countUntracked s
         trackedTitle   = title (" Tracked " ++ show tcount ++ " ") $ hasFocus FTracked s
@@ -50,6 +56,11 @@ untrackedList :: L.List RName FilePath -> Bool -> Widget RName
 untrackedList l focus = L.renderList (drawItem focus) focus l
   where drawItem True True fp = withAttr attrSelItem $ str fp
         drawItem _ _ fp       = withAttr attrItem $ str fp
+
+ignoreFile :: State -> Widget RName
+ignoreFile state = border $ str "Ignore: " <+> (hLimitPercent 100 . vLimit 1 $ editor)
+  where editor = renderEditor (str . unlines) False (state ^. ignoreEditL)
+
 
 dotfHelp :: Widget RName
 dotfHelp = border . hCenter $

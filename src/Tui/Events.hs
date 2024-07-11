@@ -1,5 +1,6 @@
 module Tui.Events (appEvent) where
 
+import Data.Text.Zipper (stringZipper)
 import           Brick                 (BrickEvent (VtyEvent), EventM, halt,
                                         suspendAndResume, zoom)
 import           Brick.Widgets.List    (handleListEvent, handleListEventVi,
@@ -13,17 +14,19 @@ import           Data.Dotf             (TrackedType (..))
 import qualified Data.Vector           as V
 import           Graphics.Vty          (Event (EvKey), Key (KChar),
                                         Modifier (MCtrl))
+import Lens.Micro ((^.), (.~))
 import           Lens.Micro.Mtl        (use, (.=))
 import           System.Directory      (getHomeDirectory)
 import           System.FilePath       ((</>))
 import           System.Process        (callProcess)
 import           Tui.State             (Focus (FTracked, FUntracked),
                                         RName (RTrackedList, RUntrackedList),
-                                        State (_focus, _showAllTracked, _tab),
+                                        State (..),
                                         Tab (BundleTab, DotfileTab), focusL,
                                         showAllTrackedL, tabL, trackedL,
                                         trackedSel, trackedSelFilePath,
-                                        untrackedL, untrackedSel)
+                                        untrackedL, untrackedSel, ignoreL, ignoreEditL)
+import Brick.Widgets.Edit (editContentsL)
 
 type DEvent a = EventM RName State a
 
@@ -50,6 +53,7 @@ dotfileTabEvent FTracked ev                            = trackedListEvent ev
 dotfileTabEvent FUntracked (EvKey (KChar 'e') [])      = doEditUntracked
 dotfileTabEvent FUntracked (EvKey (KChar 'h') [MCtrl]) = doFocusLeft
 dotfileTabEvent FUntracked (EvKey (KChar 'A') [])      = doTrackFile
+dotfileTabEvent FUntracked (EvKey (KChar 'I') [])      = doIgnoreFile
 dotfileTabEvent FUntracked ev                          = untrackedListEvent ev
 dotfileTabEvent _ _                                    = return ()
 
@@ -68,6 +72,14 @@ doSwitchTab DotfileTab = do
   tabL   .= DotfileTab
   focusL .= FTracked
 doSwitchTab t = tabL .= t
+
+doIgnoreFile :: DEvent ()
+doIgnoreFile = do
+  state <- get
+  case untrackedSel state of
+    Just fp -> ignoreL .= not (state ^. ignoreL) 
+               -- >> zoom ignoreEditL $ editContentsL .~ stringZipper [fp] Nothing
+    Nothing -> return ()
 
 doFocusLeft :: DEvent ()
 doFocusLeft = do

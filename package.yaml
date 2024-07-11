@@ -39,6 +39,7 @@ dependencies:
 - microlens-th
 - mtl
 - vector
+- text-zipper
 
 default-extensions:
 - OverloadedStrings
