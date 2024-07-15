@@ -22,9 +22,7 @@ doMove :: Event -> DEvent ()
 doMove ev = do
   zoom bundlesL $ handleListEventVi handleListEvent ev
   lst <- use bundlesL
-  case listSelectedElement lst of
-    Just (_, e) -> selectBundle $ Just e
-    Nothing     -> selectBundle Nothing
+  selectBundle $ fmap snd (listSelectedElement lst)
 
 doUnselect :: DEvent ()
 doUnselect = do

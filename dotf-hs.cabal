@@ -30,13 +30,6 @@ library
       Data.Dotf.Bundles
       Data.Dotf.Os
       Tui
-      Tui.Demo.DialogDemo
-      Tui.Demo.FileBrowserDemo
-      Tui.Demo.LayerDemo
-      Tui.Demo.ListViDemo
-      Tui.Demo.SuspendAndResumeDemo
-      Tui.Demo.TableDemo
-      Tui.Demo.ThemeDemo
       Tui.Event.Bundles
       Tui.Event.Dotfiles
       Tui.Event.Ignore

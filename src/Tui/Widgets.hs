@@ -1,5 +1,4 @@
-{-# LANGUAGE FlexibleInstances    #-}
-{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Tui.Widgets (
   ui,
   dotfileTab,
@@ -105,19 +104,24 @@ ignoreComp state = border $ str "Ignore: " <+> (hLimitPercent 100 . vLimit 1 $ e
 
 dotfHelp :: Widget RName
 dotfHelp = border . hCenter $
-         hCenter (tip "j/k:" " Up/Down  "
-         <+> tip "Ctrl+h/l:" " Switch Left/Right  "
-         <+> tip "Tab:" " Switch Focus  "
-         <+> tip "q:" " Quit") <=>
-         hCenter (tip "e:" " Edit  "
-         <+> tip "a:" " Show All  "
-         <+> tip "c:" " Commit  "
-         <+> tip "A/R:" " Add/Remove File  "
-         <+> tip "I:" " Ignore Untracked  ")
+         hCenter (   tip "j/k:" " Up/Down  "
+                 <+> tip "Ctrl+h/l:" " Switch Left/Right  "
+                 <+> tip "Tab:" " Switch Focus  "
+                 <+> tip "q:" " Quit"
+                 ) <=>
+         hCenter (   tip "e:" " Edit  "
+                 <+> tip "a:" " Show All  "
+                 <+> tip "c:" " Commit  "
+                 <+> tip "A/R:" " Add/Remove File  "
+                 <+> tip "I:" " Ignore Untracked  "
+                 )
   where tip k v = withAttr attrTitle $ str k <+> withAttr attrItem (str v)
 
 bundleHelp :: Widget RName
-bundleHelp = border . hCenter $ hCenter (tip "j/k:" " Up/Down  ")
+bundleHelp = border . hCenter $
+             hCenter (   tip "j/k:" " Up/Down  "
+                     <+> tip "Esc:" " Deselect  "
+                     )
   where tip k v = withAttr attrTitle $ str k <+> withAttr attrItem (str v)
 
 bundleTab :: State -> Widget RName
