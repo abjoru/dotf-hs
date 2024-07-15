@@ -1,18 +1,16 @@
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 module Tui.Theme (
+  TypeAttr(..),
+
   theme,
   attrKey,
   attrBold,
   attrUnder,
+  attrItem,
   attrTitle,
   attrTitleFocus,
-  attrTab,
-  attrTabFocus,
   attrAppName,
-  attrSelItem,
-  attrSelUnfocusItem,
-  attrItem,
-  attrStagedItem,
-  attrUnstagedItem
 ) where
 
 import           Brick                (AttrName, attrName, fg, on)
@@ -21,10 +19,30 @@ import qualified Brick.Widgets.Border as B
 import qualified Brick.Widgets.Dialog as D
 import qualified Brick.Widgets.Edit   as E
 import qualified Brick.Widgets.List   as L
-import           Graphics.Vty         (Color, black, bold, brightBlack,
-                                       brightCyan, brightMagenta, brightWhite,
-                                       brightYellow, green, red, rgbColor,
-                                       underline, white, withStyle, yellow)
+import           Data.Dotf
+import           Graphics.Vty
+import           Tui.State
+
+class TypeAttr a where
+  attr :: a -> Bool -> AttrName
+
+instance TypeAttr TrackedType where
+  attr _ True               = attrSelItem
+  attr (Tracked _) False    = attrItem
+  attr (Staged _ _) False   = attrStagedItem
+  attr (Unstaged _ _) False = attrUnstagedItem
+
+instance TypeAttr FilePath where
+  attr _ True  = attrSelItem
+  attr _ False = attrItem
+
+instance TypeAttr Tab where
+  attr _ True  = attrTabFocus
+  attr _ False = attrTab
+
+instance TypeAttr Bundle where
+  attr _ True  = attrSelItem
+  attr _ False = attrItem
 
 absBlack :: Color
 absBlack = rgbColor (0 :: Integer) 0 0
@@ -80,9 +98,6 @@ attrAppName = attrName "app-name"
 
 attrSelItem :: AttrName
 attrSelItem = attrName "selected-item"
-
-attrSelUnfocusItem :: AttrName
-attrSelUnfocusItem = attrName "selected-item-unfocused"
 
 attrItem :: AttrName
 attrItem = attrName "item"

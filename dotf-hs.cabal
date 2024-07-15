@@ -5,7 +5,7 @@ cabal-version: 2.2
 -- see: https://github.com/sol/hpack
 
 name:           dotf-hs
-version:        0.1.0.0
+version:        0.2.0.0
 description:    Please see the README on GitHub at <https://github.com/abjoru/dotf-hs#readme>
 homepage:       https://github.com/abjoru/dotf-hs#readme
 bug-reports:    https://github.com/abjoru/dotf-hs/issues
@@ -29,7 +29,6 @@ library
       Data.Dotf
       Data.Dotf.Bundles
       Data.Dotf.Os
-      Lib
       Tui
       Tui.Demo.DialogDemo
       Tui.Demo.FileBrowserDemo
@@ -38,6 +37,9 @@ library
       Tui.Demo.SuspendAndResumeDemo
       Tui.Demo.TableDemo
       Tui.Demo.ThemeDemo
+      Tui.Event.Bundles
+      Tui.Event.Dotfiles
+      Tui.Event.Ignore
       Tui.Events
       Tui.Popup
       Tui.State

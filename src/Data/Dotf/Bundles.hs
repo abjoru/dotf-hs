@@ -6,9 +6,13 @@ module Data.Dotf.Bundles (
 
   loadBundles,
   packages,
+  scripts,
   osPackages,
   collectPackages,
-  collectOsPackages
+  collectOsPackages,
+  collectNamedPackages,
+  collectGitPackages,
+  collectScripts
 ) where
 
 import           Control.Monad     (foldM)
@@ -63,11 +67,27 @@ osPackages bundle = fmap (\d -> foldr (find d) [] $ packages bundle) distro
 packages :: Bundle -> [Package]
 packages b = map (\(NamedPackage _ p) -> p) $ bundleOsPackages b
 
+scripts :: Bundle -> [FilePath]
+scripts v = mkScriptList (bundlePreInstallScript v) (bundlePostInstallScript v)
+  where mkScriptList (Just a) (Just b) = [a, b]
+        mkScriptList (Just a) Nothing  = [a]
+        mkScriptList Nothing (Just b)  = [b]
+        mkScriptList _ _               = []
+
 collectPackages :: [Bundle] -> [Package]
 collectPackages = foldr (\b acc -> packages b ++ acc) []
 
+collectNamedPackages :: [Bundle] -> [NamedPackage]
+collectNamedPackages = foldr (\b acc -> bundleOsPackages b ++ acc) []
+
 collectOsPackages :: [Bundle] -> IO [String]
 collectOsPackages = foldM (\acc b -> (++ acc) <$> osPackages b) []
+
+collectGitPackages :: [Bundle] -> [GitPackage]
+collectGitPackages = foldr (\b acc -> bundleGitPackages b ++ acc) []
+
+collectScripts :: [Bundle] -> [FilePath]
+collectScripts = foldr (\b acc -> scripts b ++ acc) []
 
 -----------------
 -- YAML Parses --

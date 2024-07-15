@@ -2,6 +2,7 @@ module Data.Dotf (
   module Data.Dotf.Bundles,
   module Data.Dotf.Os,
 
+  Path(..),
   TrackedType(..),
   GitError(..),
 
@@ -9,9 +10,7 @@ module Data.Dotf (
   ErrorOrTracked,
   ErrorOrFilePaths,
 
-  Answer,
-
-  trackedFile
+  Answer
 ) where
 
 import qualified Data.ByteString.Lazy       as B
@@ -23,11 +22,26 @@ import           Data.Dotf.Os
 
 import           System.IO                  (hFlush, stdout)
 
+class Path a where
+  toPath :: a -> FilePath
+
 data TrackedType
   = Tracked FilePath
-  | Staged FilePath
-  | Unstaged FilePath
-  deriving (Show, Eq)
+  | Staged FilePath Bool
+  | Unstaged FilePath Bool
+  deriving (Eq)
+
+instance Show TrackedType where
+  show (Tracked fp)        = fp
+  show (Staged fp True)    = fp
+  show (Staged fp False)   = "(D) " ++ fp
+  show (Unstaged fp True)  = fp
+  show (Unstaged fp False) = "(D) " ++ fp
+
+instance Path TrackedType where
+  toPath (Tracked fp)    = fp
+  toPath (Staged fp _)   = fp
+  toPath (Unstaged fp _) = fp
 
 data GitError = GitError {
   errorCode    :: Int,
@@ -54,14 +68,9 @@ instance Read Answer where
     "n"    -> [(No, [])]
     _      -> [(No, [])]
 
-trackedFile :: TrackedType -> FilePath
-trackedFile (Tracked fp)  = fp
-trackedFile (Staged fp)   = fp
-trackedFile (Unstaged fp) = fp
-
 -- Example: Move to commands in separate func!
 askNewBareRepo :: FilePath -> IO Answer
-askNewBareRepo path = do
-  putStr ("Do you really want to create a new bare repo at '" ++ path ++ "'? (q/y/N) ")
+askNewBareRepo p = do
+  putStr ("Do you really want to create a new bare repo at '" ++ p ++ "'? (q/y/N) ")
   hFlush stdout
   read <$> getLine

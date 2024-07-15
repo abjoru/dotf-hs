@@ -3,7 +3,8 @@ module Data.Dotf.Os (
   distro,
 
   listBundleFiles,
-  listFilesInDir
+  listFilesInDir,
+  appendToFile
 ) where
 
 import           Control.Monad    (filterM)
@@ -12,6 +13,7 @@ import           System.Directory (XdgDirectory (XdgConfig), doesDirectoryExist,
                                    listDirectory)
 import           System.FilePath  (takeExtension, (</>))
 import           System.Info      (os)
+import           System.IO        (IOMode (WriteMode), withFile)
 import           System.OsRelease (OsRelease (name),
                                    OsReleaseResult (osRelease), parseOsRelease)
 
@@ -49,3 +51,12 @@ listFilesInDir dir f = do
       let absPaths = map (dir </>) relativePaths
       files <- filterM doesFileExist absPaths
       return $ filter f files
+
+appendToFile :: String -> FilePath -> IO ()
+appendToFile line file = do
+  exists <- doesFileExist file
+  if exists
+    then appendFile file (line ++ "\n")
+    else do
+      withFile file WriteMode (\_ -> return ())
+      appendFile file (line ++ "\n")
