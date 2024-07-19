@@ -1,5 +1,6 @@
 module Control.Dotf.Commands (
   listBundles,
+  newBundle,
   listTracked,
   listTrackedAll,
   listUntracked,
@@ -41,6 +42,9 @@ type ReadProcessResult = (ExitCode, B.ByteString, B.ByteString)
 
 listBundles :: IO [Bundle]
 listBundles = listBundleFiles >>= mapM Y.decodeFileThrow
+
+newBundle :: String -> IO ()
+newBundle _ = pure ()
 
 listTrackedAll :: IO ErrorOrTracked
 listTrackedAll = do

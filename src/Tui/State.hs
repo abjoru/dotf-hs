@@ -26,6 +26,8 @@ module Tui.State (
   scriptsL,
   ignoreEditL,
   ignoreL,
+  newBundleEditL,
+  newBundleL,
   errorL,
   tabL,
   showAllTrackedL,
@@ -102,6 +104,8 @@ data State = State
   , _scripts        :: L.List RName FilePath
   , _ignoreEdit     :: Editor String RName
   , _ignore         :: Bool
+  , _newBundleEdit  :: Editor String RName
+  , _newBundle      :: Bool
   , _error          :: Maybe GitError
   , _popup          :: Maybe (Popup DialogChoice RName)
   , _tab            :: Tab
@@ -119,6 +123,8 @@ emptyState = State
   , _scripts        = L.list RScriptList V.empty 1
   , _ignoreEdit     = editor RIgnoreEditor Nothing ""
   , _ignore         = False
+  , _newBundleEdit  = editor RNewBundleEditor Nothing ""
+  , _newBundle      = False
   , _error          = Nothing
   , _popup          = Nothing
   , _tab            = DotfileTab
@@ -200,6 +206,12 @@ ignoreEditL = lens _ignoreEdit (\s e -> s { _ignoreEdit = e })
 
 ignoreL :: Lens' State Bool
 ignoreL = lens _ignore (\s i -> s { _ignore = i })
+
+newBundleEditL :: Lens' State (Editor String RName)
+newBundleEditL = lens _newBundleEdit (\s e -> s { _newBundleEdit = e })
+
+newBundleL :: Lens' State Bool
+newBundleL = lens _newBundle (\s b -> s { _newBundle = b })
 
 errorL :: Lens' State (Maybe GitError)
 errorL = lens _error (\s me -> s { _error = me })
