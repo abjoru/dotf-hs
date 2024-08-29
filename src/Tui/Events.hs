@@ -1,17 +1,18 @@
 module Tui.Events (
   DEvent,
   handleEvents,
-  syncUntracked
+  syncUntracked,
 ) where
 
-import           Brick              (BrickEvent (VtyEvent), halt)
-import           Brick.Widgets.List (listSelectedL)
-import           Graphics.Vty       (Event (EvKey), Key (KChar))
-import           Lens.Micro.Mtl     (use, zoom, (.=))
-import           Tui.Event.Bundles  (bundlesEvent)
-import           Tui.Event.Dotfiles (dotfilesEvent)
-import           Tui.Event.Ignore   (editIgnoreEvent)
-import           Tui.State
+import Brick (BrickEvent (VtyEvent), halt)
+import Brick.Widgets.List (listSelectedL)
+import Graphics.Vty
+import Lens.Micro.Mtl (use, zoom, (.=))
+import Tui.Event.Bundles (bundlesEvent)
+import Tui.Event.Dotfiles (dotfilesEvent)
+import Tui.Event.Ignore (editIgnoreEvent)
+import Tui.Event.NewBundle (newBundleEvent)
+import Tui.State
 
 --------------------
 -- Event Handlers --
@@ -19,24 +20,27 @@ import           Tui.State
 
 handleEvents :: BrickEvent RName e -> DEvent ()
 handleEvents ev@(VtyEvent e) = do
-  tab    <- use tabL
+  tab <- use tabL
   ignore <- use ignoreL
-  case (tab, ignore) of
-    (DotfileTab, True) -> editIgnoreEvent ev
-    _                  -> appEvent e
+  newBundle <- use newBundleL
+  case (tab, ignore, newBundle) of
+    (DotfileTab, True, _) -> editIgnoreEvent ev
+    (BundleTab, _, True) -> newBundleEvent ev
+    _ -> appEvent e
 handleEvents _ = return ()
 
 appEvent :: Event -> DEvent ()
-appEvent (EvKey (KChar 'q') [])  = halt
-appEvent (EvKey (KChar '1') [])  = doSwitchTab DotfileTab
-appEvent (EvKey (KChar '2') [])  = doSwitchTab BundleTab
+appEvent (EvKey (KChar 'q') []) = halt
+appEvent (EvKey (KChar '1') []) = doSwitchTab DotfileTab
+appEvent (EvKey (KChar '2') []) = doSwitchTab BundleTab
 appEvent (EvKey (KChar '\t') []) = doToggleFocus
+appEvent (EvKey KBackTab []) = doToggleReverseFocus
 appEvent ev = do
-  tab    <- use tabL
-  focus  <- use focusL
+  tab <- use tabL
+  focus <- use focusL
   case tab of
     DotfileTab -> dotfilesEvent focus ev
-    BundleTab  -> bundlesEvent focus ev
+    BundleTab -> bundlesEvent focus ev
 
 -------------
 -- Actions --
@@ -44,18 +48,35 @@ appEvent ev = do
 
 doSwitchTab :: Tab -> DEvent ()
 doSwitchTab DotfileTab = do
-  tabL   .= DotfileTab
+  tabL .= DotfileTab
   focusL .= FTracked
 doSwitchTab BundleTab = do
-  tabL   .= BundleTab
+  tabL .= BundleTab
   focusL .= FBundleList
   zoom bundlesL $ listSelectedL .= Nothing
 
 doToggleFocus :: DEvent ()
 doToggleFocus = do
-  tab   <- use tabL
+  tab <- use tabL
   focus <- use focusL
   case (tab, focus) of
-    (DotfileTab, FTracked)   -> focusL .= FUntracked
+    (DotfileTab, FTracked) -> focusL .= FUntracked
     (DotfileTab, FUntracked) -> focusL .= FTracked
-    _                        -> return ()
+    (BundleTab, FBundleList) -> focusL .= FPackageList
+    (BundleTab, FPackageList) -> focusL .= FGitPackageList
+    (BundleTab, FGitPackageList) -> focusL .= FScriptList
+    (BundleTab, FScriptList) -> focusL .= FBundleList
+    _ -> return ()
+
+doToggleReverseFocus :: DEvent ()
+doToggleReverseFocus = do
+  tab <- use tabL
+  focus <- use focusL
+  case (tab, focus) of
+    (DotfileTab, FTracked) -> focusL .= FUntracked
+    (DotfileTab, FUntracked) -> focusL .= FTracked
+    (BundleTab, FBundleList) -> focusL .= FScriptList
+    (BundleTab, FPackageList) -> focusL .= FBundleList
+    (BundleTab, FGitPackageList) -> focusL .= FPackageList
+    (BundleTab, FScriptList) -> focusL .= FGitPackageList
+    _ -> return ()

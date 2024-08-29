@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.36.0.
+-- This file has been generated from package.yaml by hpack version 0.37.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -26,13 +26,18 @@ source-repository head
 library
   exposed-modules:
       Control.Dotf.Commands
+      Control.Dotf.Commands.Bundles
+      Control.Dotf.Commands.Git
+      Control.Dotf.Commands.Os
       Data.Dotf
       Data.Dotf.Bundles
       Data.Dotf.Os
+      Data.Dotf.Templates
       Tui
       Tui.Event.Bundles
       Tui.Event.Dotfiles
       Tui.Event.Ignore
+      Tui.Event.NewBundle
       Tui.Events
       Tui.Popup
       Tui.State

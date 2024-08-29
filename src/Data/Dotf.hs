@@ -1,26 +1,25 @@
 module Data.Dotf (
   module Data.Dotf.Bundles,
   module Data.Dotf.Os,
-
-  Path(..),
-  TrackedType(..),
-  GitError(..),
-
+  module Data.Dotf.Templates,
+  Path (..),
+  TrackedType (..),
+  GitError (..),
   ErrorOrString,
   ErrorOrTracked,
   ErrorOrFilePaths,
-
-  Answer
+  Answer,
 ) where
 
-import qualified Data.ByteString.Lazy       as B
+import qualified Data.ByteString.Lazy as B
 import qualified Data.ByteString.Lazy.Char8 as C8
 
-import           Data.Char                  (isLetter, toLower)
-import           Data.Dotf.Bundles
-import           Data.Dotf.Os
+import Data.Char (isLetter, toLower)
+import Data.Dotf.Bundles
+import Data.Dotf.Os
+import Data.Dotf.Templates
 
-import           System.IO                  (hFlush, stdout)
+import System.IO (hFlush, stdout)
 
 class Path a where
   toPath :: a -> FilePath
@@ -32,21 +31,22 @@ data TrackedType
   deriving (Eq)
 
 instance Show TrackedType where
-  show (Tracked fp)        = fp
-  show (Staged fp True)    = fp
-  show (Staged fp False)   = "(D) " ++ fp
-  show (Unstaged fp True)  = fp
+  show (Tracked fp) = fp
+  show (Staged fp True) = fp
+  show (Staged fp False) = "(D) " ++ fp
+  show (Unstaged fp True) = fp
   show (Unstaged fp False) = "(D) " ++ fp
 
 instance Path TrackedType where
-  toPath (Tracked fp)    = fp
-  toPath (Staged fp _)   = fp
+  toPath (Tracked fp) = fp
+  toPath (Staged fp _) = fp
   toPath (Unstaged fp _) = fp
 
-data GitError = GitError {
-  errorCode    :: Int,
-  errorMessage :: B.ByteString
-} deriving Eq
+data GitError = GitError
+  { errorCode :: Int
+  , errorMessage :: B.ByteString
+  }
+  deriving (Eq)
 
 instance Show GitError where
   show err = concat ["Error occurred: ", show (errorCode err), " - ", C8.unpack (errorMessage err)]
@@ -56,17 +56,17 @@ type ErrorOrFilePaths = Either GitError [FilePath]
 type ErrorOrTracked = Either GitError [TrackedType]
 
 data Answer = Yes | No | Quit
-  deriving Show
+  deriving (Show)
 
 instance Read Answer where
   readsPrec _ input = case fmap toLower . filter isLetter $ input of
     "quit" -> [(Quit, [])]
-    "q"    -> [(Quit, [])]
-    "yes"  -> [(Yes, [])]
-    "y"    -> [(Yes, [])]
-    "no"   -> [(No, [])]
-    "n"    -> [(No, [])]
-    _      -> [(No, [])]
+    "q" -> [(Quit, [])]
+    "yes" -> [(Yes, [])]
+    "y" -> [(Yes, [])]
+    "no" -> [(No, [])]
+    "n" -> [(No, [])]
+    _ -> [(No, [])]
 
 -- Example: Move to commands in separate func!
 askNewBareRepo :: FilePath -> IO Answer
