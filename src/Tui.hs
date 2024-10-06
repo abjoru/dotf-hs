@@ -1,15 +1,16 @@
 module Tui (tui) where
 
-import Brick
-import Brick.Themes (themeToAttrMap)
-import Control.Dotf.Commands (listTracked, listUntracked)
-import Control.Monad (void)
-import Data.Dotf
-import Lens.Micro
-import Tui.Events
-import Tui.State
-import Tui.Theme (theme)
-import Tui.Widgets (ui)
+import           Brick
+import           Brick.Themes  (themeToAttrMap)
+import           Control.Monad (void)
+import           Dotf.Bundles
+import           Dotf.Commands
+import           Dotf.Types
+import           Lens.Micro    ((^.))
+import           Tui.Events    (handleEvents)
+import           Tui.State
+import           Tui.Theme     (theme)
+import           Tui.Widgets   (ui)
 
 app :: App State e RName
 app =
@@ -23,29 +24,23 @@ app =
 
 appCursor :: State -> [CursorLocation RName] -> Maybe (CursorLocation RName)
 appCursor state r = case state ^. focusL of
-  FIgnoreEditor -> showCursorNamed RIgnoreEditor r
+  FIgnoreEditor    -> showCursorNamed RIgnoreEditor r
   FNewBundleEditor -> showCursorNamed RNewBundleEditor r
-  _ -> Nothing
+  _                -> Nothing
 
 loadTracked :: IO [TrackedType]
-loadTracked = do
-  xs <- listTracked
-  return $ case xs of
-    Right v -> v
-    Left er -> error $ show er
+loadTracked = resultOrDie <$> listTracked
 
 loadUntracked :: IO [FilePath]
-loadUntracked = do
-  xs <- listUntracked
-  return $ case xs of
-    Right v -> v
-    Left er -> error $ show er
+loadUntracked = resultOrDie <$> listUntracked
+
+resultOrDie :: Either GitError [a] -> [a]
+resultOrDie (Right v) = v
+resultOrDie (Left er) = error $ show er
 
 tui :: IO ()
 tui = do
-  state <-
-    withState
-      <$> loadTracked
-      <*> loadUntracked
-      <*> loadBundles
+  state <- withState <$> loadTracked
+                     <*> loadUntracked
+                     <*> loadBundles
   void $ defaultMain app state

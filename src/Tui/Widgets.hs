@@ -1,39 +1,29 @@
 {-# LANGUAGE FlexibleInstances #-}
-
 module Tui.Widgets (
   ui,
   dotfileTab,
   bundleTab,
 ) where
 
-import Paths_dotf_hs (version)
+import           Paths_dotf_hs        (version)
 
-import Brick (
-  Padding (Max),
-  Widget,
-  hLimitPercent,
-  padLeft,
-  str,
-  vLimit,
-  withAttr,
-  (<+>),
-  (<=>),
- )
-import Brick.Widgets.Border (border, borderWithLabel)
-import qualified Brick.Widgets.List as L
+import           Brick                (Padding (Max), Widget, hLimitPercent,
+                                       padLeft, str, vLimit, withAttr, (<+>),
+                                       (<=>))
+import           Brick.Widgets.Border (border, borderWithLabel)
+import qualified Brick.Widgets.List   as L
 
-import Data.Dotf
-
-import Brick.Widgets.Center (hCenter)
-import Brick.Widgets.Core (Padding (Pad), hBox, padRight)
-import Brick.Widgets.Edit (renderEditor)
-import qualified Brick.Widgets.Table as T
-import qualified Data.Vector as V
-import Data.Version (showVersion)
-import Lens.Micro
-import Tui.Popup (renderPopup)
-import Tui.State
-import Tui.Theme
+import           Brick.Widgets.Center (hCenter)
+import           Brick.Widgets.Core   (Padding (Pad), hBox, padRight)
+import           Brick.Widgets.Edit   (renderEditor)
+import qualified Brick.Widgets.Table  as T
+import qualified Data.Vector          as V
+import           Data.Version         (showVersion)
+import           Dotf.Types
+import           Lens.Micro
+import           Tui.Popup            (renderPopup)
+import           Tui.State
+import           Tui.Theme
 
 class ToWidget a where
   -- Uses componentFocus -> elementFocus -> element
@@ -86,7 +76,7 @@ ui st = maybe [drawUi] (\p -> [renderPopup p, drawUi]) (_popup st)
  where
   drawUi = case _tab st of
     DotfileTab -> dotfileTab st
-    BundleTab -> bundleTab st
+    BundleTab  -> bundleTab st
 
 dotfileTab :: State -> Widget RName
 dotfileTab s = drawUi $ _ignore s
@@ -111,63 +101,51 @@ untrackedList l focus = L.renderList (toWidget focus) focus l
 
 ignoreComp :: State -> Widget RName
 ignoreComp state = border $ withAttr attrTitle $ str "Ignore: " <+> (hLimitPercent 100 . vLimit 1 $ editor)
- where
-  editor = renderEditor (str . unlines) (state ^. ignoreL) (state ^. ignoreEditL)
+ where editor = renderEditor (str . unlines) (state ^. ignoreL) (state ^. ignoreEditL)
 
 dotfHelp :: Widget RName
-dotfHelp =
-  border . hCenter $
-    hCenter
-      ( tip "j/k:" " Up/Down  "
-          <+> tip "Ctrl+h/l:" " Switch Left/Right  "
-          <+> tip "(Shift) Tab:" " Switch Focus  "
-          <+> tip "q:" " Quit"
-      )
-      <=> hCenter
-        ( tip "e:" " Edit  "
+dotfHelp = border . hCenter $
+    hCenter (   tip "j/k:" " Up/Down  "
+            <+> tip "Ctrl+h/l:" " Switch Left/Right  "
+            <+> tip "(Shift) Tab:" " Switch Focus  "
+            <+> tip "q:" " Quit"
+            ) <=>
+    hCenter (   tip "e:" " Edit  "
             <+> tip "a:" " Show All  "
             <+> tip "c:" " Commit  "
             <+> tip "A/R:" " Add/Remove File  "
             <+> tip "I:" " Ignore Untracked  "
-        )
- where
-  tip k v = withAttr attrTitle $ str k <+> withAttr attrItem (str v)
+            )
+ where tip k v = withAttr attrTitle $ str k <+> withAttr attrItem (str v)
 
 bundleHelp :: Widget RName
-bundleHelp =
-  border . hCenter $
-    hCenter
-      ( tip "j/k:" " Up/Down  "
-          <+> tip "Esc:" " Deselect  "
-          <+> tip "(Shift) Tab:" " Switch Focus  "
-          <+> tip "q:" " Quit"
-      )
-      <=> hCenter
-        (tip "n:" " New Bundle  " <+> tip "e:" " Edit")
- where
-  tip k v = withAttr attrTitle $ str k <+> withAttr attrItem (str v)
+bundleHelp = border . hCenter $
+    hCenter (   tip "j/k:" " Up/Down  "
+            <+> tip "Esc:" " Deselect  "
+            <+> tip "(Shift) Tab:" " Switch Focus  "
+            <+> tip "q:" " Quit"
+            ) <=>
+    hCenter (tip "n:" " New Bundle  " <+> tip "e:" " Edit")
+ where tip k v = withAttr attrTitle $ str k <+> withAttr attrItem (str v)
 
 bundleTab :: State -> Widget RName
 bundleTab s = drawUi (_newBundle s)
  where
-  drawUi False =
-    tabLine BundleTab ver
-      <=> ((bc <=> sc) <+> (pc <=> gc))
-      <=> bundleHelp
-  drawUi True =
-    tabLine BundleTab ver
-      <=> ((bc <=> sc) <+> (pc <=> gc))
-      <=> newBundleComp s
-      <=> bundleHelp
-  bc = bundleList s (hasFocus FBundleList s)
-  sc = scriptList s (hasFocus FScriptList s)
-  pc = packageList s (hasFocus FPackageList s)
-  gc = gitPackageList s (hasFocus FGitPackageList s)
+   drawUi False = tabLine BundleTab ver
+                  <=> ((bc <=> sc) <+> (pc <=> gc))
+                  <=> bundleHelp
+   drawUi True = tabLine BundleTab ver
+                 <=> ((bc <=> sc) <+> (pc <=> gc))
+                 <=> newBundleComp s
+                 <=> bundleHelp
+   bc = bundleList s (hasFocus FBundleList s)
+   sc = scriptList s (hasFocus FScriptList s)
+   pc = packageList s (hasFocus FPackageList s)
+   gc = gitPackageList s (hasFocus FGitPackageList s)
 
 bundleList :: State -> Bool -> Widget RName
 bundleList s focus = borderWithLabel mkTitle $ L.renderList (toWidget focus) focus (s ^. bundlesL)
- where
-  mkTitle = title " Bundles " $ hasFocus FBundleList s
+ where mkTitle = title " Bundles " $ hasFocus FBundleList s
 
 packageList :: State -> Bool -> Widget RName
 packageList s focus =
@@ -177,14 +155,13 @@ packageList s focus =
       headers = hBox $ T.alignColumns pkgColAlign rowWidths $ rHead pkgHeaderRow
    in borderWithLabel listTitle $ headers <=> L.renderList (mkRow rowWidths) focus rowList
  where
-  mkRow w _ r = hBox $ T.alignColumns pkgColAlign w (rRow r)
-  rRow (PkgRow n a b c) = [str n, str a, str b, str c]
-  rHead (PkgRow n a b c) =
-    [ withAttr attrTitle $ str n
-    , withAttr attrTitle $ str a
-    , withAttr attrTitle $ str b
-    , withAttr attrTitle $ str c
-    ]
+   mkRow w _ r = hBox $ T.alignColumns pkgColAlign w (rRow r)
+   rRow (PkgRow n a b c) = [str n, str a, str b, str c]
+   rHead (PkgRow n a b c) = [ withAttr attrTitle $ str n
+                            , withAttr attrTitle $ str a
+                            , withAttr attrTitle $ str b
+                            , withAttr attrTitle $ str c
+                            ]
 
 gitPackageList :: State -> Bool -> Widget RName
 gitPackageList s focus =
@@ -194,36 +171,28 @@ gitPackageList s focus =
       headers = hBox $ T.alignColumns gitColAlign rowWidths $ rHead gitHeaderRow
    in borderWithLabel listTitle $ headers <=> L.renderList (mkRow rowWidths) focus rowList
  where
-  mkRow w _ r = hBox $ T.alignColumns gitColAlign w (rRow r)
-  rRow (GitRow a b c) = [str a, str b, str c]
-  rHead (GitRow a b c) =
-    [ withAttr attrTitle $ str a
-    , withAttr attrTitle $ str b
-    , withAttr attrTitle $ str c
-    ]
+   mkRow w _ r = hBox $ T.alignColumns gitColAlign w (rRow r)
+   rRow (GitRow a b c) = [str a, str b, str c]
+   rHead (GitRow a b c) = [ withAttr attrTitle $ str a
+                          , withAttr attrTitle $ str b
+                          , withAttr attrTitle $ str c
+                          ]
 
 scriptList :: State -> Bool -> Widget RName
 scriptList s focus = borderWithLabel mkTitle $ L.renderList (toWidget focus) focus (s ^. scriptsL)
- where
-  mkTitle = title " Scripts " $ hasFocus FScriptList s
+ where mkTitle = title " Scripts " $ hasFocus FScriptList s
 
 newBundleComp :: State -> Widget RName
-newBundleComp state =
-  border $
-    withAttr attrTitle $
-      str "Name: "
-        <+> (hLimitPercent 100 . vLimit 1 $ editor)
- where
-  editor = renderEditor (str . unlines) (state ^. newBundleL) (state ^. newBundleEditL)
+newBundleComp state = border $ withAttr attrTitle $ str "Name: " <+> (hLimitPercent 100 . vLimit 1 $ editor)
+ where editor = renderEditor (str . unlines) (state ^. newBundleL) (state ^. newBundleEditL)
 
 tabSelector :: Tab -> Widget RName
 tabSelector selected = padLeft (Pad 1) . hBox $ map render [DotfileTab, BundleTab]
- where
-  render t = toWidget True (selected == t) t
+ where render t = toWidget True (selected == t) t
 
 tabLine :: Tab -> String -> Widget RName
 tabLine t n = tabSelector t <+> (padLeft Max . padRight (Pad 1) $ withAttr attrAppName (str n))
 
 title :: String -> Bool -> Widget RName
-title txt True = withAttr attrTitleFocus $ str txt
+title txt True  = withAttr attrTitleFocus $ str txt
 title txt False = withAttr attrTitle $ str txt

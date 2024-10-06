@@ -1,8 +1,8 @@
-module Data.Dotf.Templates (
+module Dotf.Templates (
   bundleFileTemplate,
 ) where
 
-import Data.String.Interpolate (__i)
+import           Data.String.Interpolate (__i)
 
 bundleFileTemplate :: String -> String
 bundleFileTemplate name =

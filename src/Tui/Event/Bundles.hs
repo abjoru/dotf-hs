@@ -1,25 +1,29 @@
 module Tui.Event.Bundles (bundlesEvent) where
 
-import Brick
-import Brick.Widgets.List
-import Control.Monad.State (MonadIO (liftIO))
-import Data.Dotf.Os (resolveBundleFile)
-import Graphics.Vty
-import Lens.Micro.Mtl
-import Tui.State
+import           Brick
+import           Brick.Widgets.List
+import           Control.Monad.State (MonadIO (liftIO))
+import           Dotf.Utils
+import           Graphics.Vty
+import           Lens.Micro.Mtl
+import           Tui.State
+
+--------------------
+-- Event Handlers --
+--------------------
 
 bundlesEvent :: Focus -> Event -> DEvent ()
 bundlesEvent _ (EvKey (KChar 'n') []) = doCreateNewBundle
-bundlesEvent FBundleList ev = bundleListEvent ev
-bundlesEvent FPackageList ev = packageListEvent ev
-bundlesEvent FGitPackageList ev = gitListEvent ev
-bundlesEvent FScriptList ev = scriptListEvent ev
-bundlesEvent _ _ = return ()
+bundlesEvent FBundleList ev           = bundleListEvent ev
+bundlesEvent FPackageList ev          = packageListEvent ev
+bundlesEvent FGitPackageList ev       = gitListEvent ev
+bundlesEvent FScriptList ev           = scriptListEvent ev
+bundlesEvent _ _                      = return ()
 
 bundleListEvent :: Event -> DEvent ()
 bundleListEvent (EvKey (KChar 'e') []) = doEditBundle
-bundleListEvent (EvKey KEsc []) = doUnselect
-bundleListEvent ev = doMove ev
+bundleListEvent (EvKey KEsc [])        = doUnselect
+bundleListEvent ev                     = doMove ev
 
 packageListEvent :: Event -> DEvent ()
 packageListEvent (EvKey KEsc []) = zoom packagesL $ listSelectedL .= Nothing
@@ -30,6 +34,7 @@ gitListEvent (EvKey KEsc []) = zoom gitPackagesL $ listSelectedL .= Nothing
 gitListEvent ev = zoom gitPackagesL $ handleListEventVi handleListEvent ev
 
 scriptListEvent :: Event -> DEvent ()
+scriptListEvent (EvKey (KChar 'e') []) = doEditScript
 scriptListEvent (EvKey KEsc []) = zoom scriptsL $ listSelectedL .= Nothing
 scriptListEvent ev = zoom scriptsL $ handleListEventVi handleListEvent ev
 
@@ -39,7 +44,7 @@ scriptListEvent ev = zoom scriptsL $ handleListEventVi handleListEvent ev
 
 doCreateNewBundle :: DEvent ()
 doCreateNewBundle = do
-  focusL .= FNewBundleEditor
+  focusL     .= FNewBundleEditor
   newBundleL .= True
 
 doMove :: Event -> DEvent ()
@@ -56,5 +61,11 @@ doUnselect = do
 doEditBundle :: DEvent ()
 doEditBundle = do
   state <- get
-  file <- liftIO $ resolveBundleFile (bundleSelFile state)
+  file  <- liftIO $ resolveBundleFile (bundleSelFile state)
   maybeEditFile file >> syncBundles
+
+doEditScript :: DEvent ()
+doEditScript = do
+  script <- use scriptsL
+  file   <- liftIO $ resolveScriptFile (snd <$> listSelectedElement script)
+  maybeEditFile file

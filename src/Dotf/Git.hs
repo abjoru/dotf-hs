@@ -1,4 +1,4 @@
-module Control.Dotf.Commands.Git (
+module Dotf.Git (
   gitTracked,
   gitTrackedStaged,
   gitTrackedUnstaged,
@@ -20,15 +20,16 @@ module Control.Dotf.Commands.Git (
   mapEitherM,
 ) where
 
-import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString.Lazy       as B
 import qualified Data.ByteString.Lazy.Char8 as C8
-import Data.Dotf (ErrorOrFilePaths, ErrorOrString, GitError (GitError), TrackedType)
-import Data.String.Interpolate (i)
-import System.Directory (doesFileExist, doesPathExist, getHomeDirectory)
-import System.FilePath ((</>))
-import System.IO (IOMode (WriteMode), withFile)
-import qualified System.Process as P
-import qualified System.Process.Typed as PT
+import           Data.String.Interpolate    (i)
+import           Dotf.Types
+import           System.Directory           (doesFileExist, doesPathExist,
+                                             getHomeDirectory)
+import           System.FilePath            ((</>))
+import           System.IO                  (IOMode (WriteMode), withFile)
+import qualified System.Process             as P
+import qualified System.Process.Typed       as PT
 
 type ReadProcessResult = (PT.ExitCode, B.ByteString, B.ByteString)
 
@@ -52,7 +53,7 @@ gitUnstageFile fp = bare ["reset", "--", fp] >>= PT.runProcess
 
 gitUntrackFile :: FilePath -> IO PT.ExitCode
 gitUntrackFile fp = do
-  home <- getHomeDirectory
+  home   <- getHomeDirectory
   exists <- doesFileExist $ home </> fp
   if exists
     then bare ["rm", "--cached", fp] >>= PT.runProcess
@@ -122,12 +123,11 @@ processFileListResult (PT.ExitSuccess, out, _) = Right $ fmap C8.unpack (C8.line
 
 processStringResult :: ReadProcessResult -> ErrorOrString
 processStringResult (PT.ExitFailure cd, _, err) = Left $ GitError cd err
-processStringResult (PT.ExitSuccess, out, _) = Right $ C8.unpack out
+processStringResult (PT.ExitSuccess, out, _)    = Right $ C8.unpack out
 
 mapEitherM :: (FilePath -> Bool -> TrackedType) -> Either e [FilePath] -> IO (Either e [TrackedType])
 mapEitherM _ (Left err) = return $ Left err
-mapEitherM f (Right v) = fmap Right (mapM checkPath v)
- where
-  checkPath p = do
-    home <- getHomeDirectory
-    f p <$> doesPathExist (home </> p)
+mapEitherM f (Right v)  = fmap Right (mapM checkPath v)
+ where checkPath p = do
+         home <- getHomeDirectory
+         f p <$> doesPathExist (home </> p)

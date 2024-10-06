@@ -1,5 +1,4 @@
-{-# LANGUAGE FlexibleInstances    #-}
-{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Tui.Theme (
   TypeAttr(..),
 
@@ -19,7 +18,7 @@ import qualified Brick.Widgets.Border as B
 import qualified Brick.Widgets.Dialog as D
 import qualified Brick.Widgets.Edit   as E
 import qualified Brick.Widgets.List   as L
-import           Data.Dotf
+import           Dotf.Types
 import           Graphics.Vty
 import           Tui.State
 

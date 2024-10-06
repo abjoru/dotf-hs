@@ -39,24 +39,25 @@ module Tui.State (
   maybeEditFile,
 ) where
 
-import Brick (get, suspendAndResume)
-import Brick.Types (EventM)
-import Brick.Widgets.Edit (Editor, editor)
-import Brick.Widgets.List (listElementsL)
-import qualified Brick.Widgets.List as L
-import Control.Dotf.Commands (
-  editFile,
-  listBundles,
-  unsafeListTracked,
-  unsafeListUntracked,
- )
-import Control.Monad.State (MonadIO (liftIO))
-import Data.Dotf
-import Data.Maybe (fromMaybe)
-import qualified Data.Vector as V
-import Lens.Micro (Lens', lens, (^.))
-import Lens.Micro.Mtl (use, (.=))
-import Tui.Popup (Popup)
+import           Brick               (get, suspendAndResume)
+import           Brick.Types         (EventM)
+import           Brick.Widgets.Edit  (Editor, editor)
+import           Brick.Widgets.List  (listElementsL)
+import qualified Brick.Widgets.List  as L
+import           Control.Monad.State (MonadIO (liftIO))
+import           Data.Maybe          (fromMaybe)
+import qualified Data.Vector         as V
+import           Dotf.Bundles
+import           Dotf.Commands
+import           Dotf.Types
+import           Dotf.Utils
+import           Lens.Micro          (Lens', lens, (^.))
+import           Lens.Micro.Mtl      (use, (.=))
+import           Tui.Popup           (Popup)
+
+-----------
+-- Types --
+-----------
 
 type DEvent a = EventM RName State a
 
@@ -89,7 +90,7 @@ data Tab
 
 instance Show Tab where
   show DotfileTab = "Dotfiles [1]"
-  show BundleTab = "Bundles [2]"
+  show BundleTab  = "Bundles [2]"
 
 -- name, arch, osx, deb
 data PkgRow = PkgRow String String String String
@@ -100,22 +101,26 @@ data GitRow = GitRow String String String
 data DialogChoice = Ok
 
 data State = State
-  { _focus :: Focus
-  , _tracked :: L.List RName TrackedType
-  , _untracked :: L.List RName FilePath
-  , _bundles :: L.List RName Bundle
-  , _packages :: L.List RName PkgRow
-  , _gitPackages :: L.List RName GitRow
-  , _scripts :: L.List RName FilePath
-  , _ignoreEdit :: Editor String RName
-  , _ignore :: Bool
-  , _newBundleEdit :: Editor String RName
-  , _newBundle :: Bool
-  , _error :: Maybe GitError
-  , _popup :: Maybe (Popup DialogChoice RName)
-  , _tab :: Tab
+  { _focus          :: Focus
+  , _tracked        :: L.List RName TrackedType
+  , _untracked      :: L.List RName FilePath
+  , _bundles        :: L.List RName Bundle
+  , _packages       :: L.List RName PkgRow
+  , _gitPackages    :: L.List RName GitRow
+  , _scripts        :: L.List RName FilePath
+  , _ignoreEdit     :: Editor String RName
+  , _ignore         :: Bool
+  , _newBundleEdit  :: Editor String RName
+  , _newBundle      :: Bool
+  , _error          :: Maybe GitError
+  , _popup          :: Maybe (Popup DialogChoice RName)
+  , _tab            :: Tab
   , _showAllTracked :: Bool
   }
+
+-------------
+-- Methods --
+-------------
 
 emptyState :: State
 emptyState =
@@ -150,18 +155,12 @@ withState ts us bs =
 
 mkPkgRows :: [Bundle] -> [PkgRow]
 mkPkgRows bs = map mkRow $ collectNamedPackages bs
- where
-  mkRow (NamedPackage n (Package a b c)) =
-    PkgRow
-      n
-      (fromMaybe "" a)
-      (fromMaybe "" b)
-      (fromMaybe "" c)
+ where mkRow (NamedPackage n (Package a b c)) =
+         PkgRow n (fromMaybe "" a) (fromMaybe "" b) (fromMaybe "" c)
 
 mkGitRows :: [Bundle] -> [GitRow]
 mkGitRows bs = map mkRow $ collectGitPackages bs
- where
-  mkRow g = GitRow (gitName g) (gitUrl g) (fromMaybe "" $ gitBranch g)
+ where mkRow g = GitRow (gitName g) (gitUrl g) (fromMaybe "" $ gitBranch g)
 
 hasFocus :: Focus -> State -> Bool
 hasFocus expected st = expected == _focus st
@@ -181,7 +180,7 @@ bundleSelFile :: State -> Maybe String
 bundleSelFile state =
   let bundle = bundleSel state
       name = fmap bundleName bundle
-   in fmap (\n -> n ++ ".yaml") name
+   in fmap (++ ".yaml") name
 
 trackedSel :: State -> Maybe TrackedType
 trackedSel state =
@@ -196,7 +195,7 @@ untrackedSel s =
   let l = s ^. untrackedL
    in case L.listSelectedElement l of
         Just (_, fp) -> Just fp
-        _ -> Nothing
+        _            -> Nothing
 
 ------------
 -- Lenses --
@@ -250,36 +249,36 @@ showAllTrackedL = lens _showAllTracked (\s t -> s{_showAllTracked = t})
 
 syncBundles :: DEvent ()
 syncBundles = do
-  bundles <- liftIO listBundles
-  bundlesL .= L.list RBundleList (V.fromList bundles) 1
-  packagesL .= L.list RPackageList (V.fromList $ mkPkgRows bundles) 1
+  bundles      <- liftIO loadBundles
+  bundlesL     .= L.list RBundleList (V.fromList bundles) 1
+  packagesL    .= L.list RPackageList (V.fromList $ mkPkgRows bundles) 1
   gitPackagesL .= L.list RGitPackageList (V.fromList $ mkGitRows bundles) 1
-  scriptsL .= L.list RScriptList (V.fromList $ collectScripts bundles) 1
+  scriptsL     .= L.list RScriptList (V.fromList $ collectScripts bundles) 1
 
 selectBundle :: Maybe Bundle -> DEvent ()
 selectBundle (Just b) = do
-  packagesL .= L.list RPackageList (V.fromList $ mkPkgRows [b]) 1
+  packagesL    .= L.list RPackageList (V.fromList $ mkPkgRows [b]) 1
   gitPackagesL .= L.list RGitPackageList (V.fromList $ mkGitRows [b]) 1
-  scriptsL .= L.list RScriptList (V.fromList $ collectScripts [b]) 1
+  scriptsL     .= L.list RScriptList (V.fromList $ collectScripts [b]) 1
 selectBundle Nothing = do
-  bundleList <- use bundlesL
-  let allBundles = V.toList $ bundleList ^. listElementsL
-  packagesL .= L.list RPackageList (V.fromList $ mkPkgRows allBundles) 1
-  gitPackagesL .= L.list RGitPackageList (V.fromList $ mkGitRows allBundles) 1
-  scriptsL .= L.list RScriptList (V.fromList $ collectScripts allBundles) 1
+  bundleList     <- use bundlesL
+  let allBundles  = V.toList $ bundleList ^. listElementsL
+  packagesL      .= L.list RPackageList (V.fromList $ mkPkgRows allBundles) 1
+  gitPackagesL   .= L.list RGitPackageList (V.fromList $ mkGitRows allBundles) 1
+  scriptsL       .= L.list RScriptList (V.fromList $ collectScripts allBundles) 1
 
 syncDotfiles :: DEvent ()
 syncDotfiles = syncTracked >> syncUntracked
 
 syncTracked :: DEvent ()
 syncTracked = do
-  s <- use showAllTrackedL
-  files <- liftIO $ unsafeListTracked s
+  s        <- use showAllTrackedL
+  files    <- liftIO $ unsafeListTracked s
   trackedL .= L.list RTrackedList (V.fromList files) 1
 
 syncUntracked :: DEvent ()
 syncUntracked = do
-  files <- liftIO unsafeListUntracked
+  files      <- liftIO unsafeListUntracked
   untrackedL .= L.list RUntrackedList (V.fromList files) 1
 
 maybeEditFile :: Maybe FilePath -> DEvent ()

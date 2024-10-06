@@ -1,15 +1,15 @@
 module Tui.Event.NewBundle (newBundleEvent) where
 
-import Brick (BrickEvent (VtyEvent))
-import Brick.Widgets.Edit (editContentsL, handleEditorEvent)
-import Control.Dotf.Commands (newBundle)
-import Control.Monad.State (MonadIO (liftIO))
-import Data.Text.Zipper (getText)
-import Graphics.Vty (Event (EvKey), Key (KEnter, KEsc))
-import Lens.Micro ((^.))
-import Lens.Micro.Mtl (use, zoom, (.=))
+import           Brick               (BrickEvent (VtyEvent))
+import           Brick.Widgets.Edit  (editContentsL, handleEditorEvent)
+import           Control.Monad.State (MonadIO (liftIO))
+import           Data.Text.Zipper    (getText)
+import           Graphics.Vty        (Event (EvKey), Key (KEnter, KEsc))
+import           Lens.Micro          ((^.))
+import           Lens.Micro.Mtl      (use, zoom, (.=))
 
-import Tui.State
+import           Dotf.Bundles
+import           Tui.State
 
 --------------------
 -- Event Handlers --
@@ -26,7 +26,7 @@ newBundleEvent ev = zoom newBundleEditL $ handleEditorEvent ev
 
 doExitNewBundle :: DEvent ()
 doExitNewBundle = do
-  focusL .= FBundleList
+  focusL     .= FBundleList
   newBundleL .= False
 
 doSubmitNewBundle :: DEvent ()
