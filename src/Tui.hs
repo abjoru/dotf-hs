@@ -1,14 +1,17 @@
 module Tui (tui) where
 
-import           Brick
+import           Brick         (App (..), CursorLocation, defaultMain,
+                                showCursorNamed)
 import           Brick.Themes  (themeToAttrMap)
 import           Control.Monad (void)
-import           Dotf.Bundles
-import           Dotf.Commands
-import           Dotf.Types
+import           Dotf.Bundles  (loadBundles)
+import           Dotf.Commands (listTracked, listUntracked)
+import           Dotf.Types    (GitError, TrackedType)
 import           Lens.Micro    ((^.))
 import           Tui.Events    (handleEvents)
-import           Tui.State
+import           Tui.State     (Focus (FIgnoreEditor, FNewBundleEditor),
+                                RName (RIgnoreEditor, RNewBundleEditor), State,
+                                focusL, withState)
 import           Tui.Theme     (theme)
 import           Tui.Widgets   (ui)
 

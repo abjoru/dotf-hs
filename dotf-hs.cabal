@@ -1,11 +1,11 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.36.0.
+-- This file has been generated from package.yaml by hpack version 0.37.0.
 --
 -- see: https://github.com/sol/hpack
 
 name:           dotf-hs
-version:        0.2.0.0
+version:        0.3.0.0
 description:    Please see the README on GitHub at <https://github.com/abjoru/dotf-hs#readme>
 homepage:       https://github.com/abjoru/dotf-hs#readme
 bug-reports:    https://github.com/abjoru/dotf-hs/issues
@@ -28,6 +28,7 @@ library
       Dotf.Bundles
       Dotf.Commands
       Dotf.Git
+      Dotf.Options
       Dotf.Templates
       Dotf.Types
       Dotf.Utils
@@ -58,11 +59,13 @@ library
     , brick
     , bytestring
     , directory
+    , extra
     , filepath
     , microlens
     , microlens-mtl
     , microlens-th
     , mtl
+    , optparse-applicative
     , os-release
     , process
     , string-interpolate
@@ -75,7 +78,7 @@ library
     , yaml
   default-language: Haskell2010
 
-executable dotf-hs-exe
+executable dotf
   main-is: Main.hs
   other-modules:
       Paths_dotf_hs
@@ -95,11 +98,13 @@ executable dotf-hs-exe
     , bytestring
     , directory
     , dotf-hs
+    , extra
     , filepath
     , microlens
     , microlens-mtl
     , microlens-th
     , mtl
+    , optparse-applicative
     , os-release
     , process
     , string-interpolate
@@ -133,11 +138,13 @@ test-suite dotf-hs-test
     , bytestring
     , directory
     , dotf-hs
+    , extra
     , filepath
     , microlens
     , microlens-mtl
     , microlens-th
     , mtl
+    , optparse-applicative
     , os-release
     , process
     , string-interpolate

@@ -20,10 +20,13 @@ module Dotf.Git (
   mapEitherM,
 ) where
 
+import           Control.Monad              (void)
 import qualified Data.ByteString.Lazy       as B
 import qualified Data.ByteString.Lazy.Char8 as C8
 import           Data.String.Interpolate    (i)
-import           Dotf.Types
+import           Dotf.Types                 (Dry, ErrorOrFilePaths,
+                                             ErrorOrString, GitError (GitError),
+                                             TrackedType)
 import           System.Directory           (doesFileExist, doesPathExist,
                                              getHomeDirectory)
 import           System.FilePath            ((</>))
@@ -62,8 +65,9 @@ gitUntrackFile fp = do
 gitDiffFile :: FilePath -> IO ReadProcessResult
 gitDiffFile fp = bare ["diff", fp] >>= PT.readProcess
 
-gitCommit :: String -> IO PT.ExitCode
-gitCommit msg = bare ["commit", "-m", msg] >>= PT.runProcess
+gitCommit :: Dry -> String -> IO ()
+gitCommit False msg = bare ["commit", "-m", msg] >>= (void . PT.runProcess)
+gitCommit True msg  = bare ["commit", "-m", msg] >>= print
 
 gitCloneBareUrl :: String -> IO PT.ExitCode
 gitCloneBareUrl url = bare ["clone", "--bare", url] >>= PT.runProcess
@@ -71,11 +75,13 @@ gitCloneBareUrl url = bare ["clone", "--bare", url] >>= PT.runProcess
 gitNewBareRepo :: FilePath -> IO PT.ExitCode
 gitNewBareRepo fp = bare ["init", "--bare", fp] >>= PT.runProcess
 
-gitPush :: IO PT.ExitCode
-gitPush = bare ["push"] >>= PT.runProcess
+gitPush :: Dry -> IO ()
+gitPush False = bare ["push"] >>= (void . PT.runProcess)
+gitPush True  = bare ["push"] >>= print
 
-gitPull :: IO PT.ExitCode
-gitPull = bare ["pull"] >>= PT.runProcess
+gitPull :: Dry -> IO ()
+gitPull False = bare ["pull"] >>= (void . PT.runProcess)
+gitPull True  = bare ["pull"] >>= print
 
 gitStatus :: IO PT.ExitCode
 gitStatus = bare ["status", "-sb"] >>= PT.runProcess

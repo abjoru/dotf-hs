@@ -1,4 +1,19 @@
-module Dotf.Types where
+module Dotf.Types (
+  Distro(..),
+  Package(..),
+  NamedPackage(..),
+  GitPackage(..),
+  Bundle(..),
+  TrackedType(..),
+  GitError(..),
+
+  Dry,
+  ErrorOrString,
+  ErrorOrFilePaths,
+  ErrorOrTracked,
+
+  Path(..)
+) where
 
 import           Data.Aeson.Key             (toString)
 import           Data.Aeson.KeyMap          (keys)

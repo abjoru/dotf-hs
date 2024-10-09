@@ -9,19 +9,25 @@ module Dotf.Bundles (
   collectPackages,
   collectNamedPackages,
   collectGitPackages,
-  collectScripts
+  collectScripts,
+  collectPreScripts,
+  collectPostScripts
 ) where
 
 import           Data.String.Interpolate (i)
 import qualified Data.Yaml               as Y
 import           Dotf.Templates          (bundleFileTemplate)
-import           Dotf.Types
-import           Dotf.Utils
+import           Dotf.Types              (Bundle (bundleGitPackages, bundleOsPackages, bundlePostInstallScript, bundlePreInstallScript),
+                                          Distro (Arch, Deb, Osx),
+                                          GitPackage (GitPackage, gitName),
+                                          NamedPackage (..), Package (Package))
+import           Dotf.Utils              (distro, listBundleFiles,
+                                          listInstalledPackages)
 import           System.Directory        (XdgDirectory (XdgCache, XdgConfig),
                                           createDirectoryIfMissing,
                                           doesDirectoryExist, getXdgDirectory)
 import           System.FilePath         ((</>))
-import           System.Process.Typed    (ProcessConfig, proc)
+import           System.Process.Typed    (ProcessConfig, proc, setWorkingDir)
 
 -----------------
 -- Typeclasses --
@@ -38,9 +44,21 @@ class Installable a where
 ---------------
 
 instance Installable [Package] where
-  toInstallProcess Arch px = (\x -> proc "paru" $ "-S" : x) <$> listNewPackages px
-  toInstallProcess Osx px  = (\x -> proc "brew" $ "install" : x) <$> listNewPackages px
-  toInstallProcess Deb px  = (\x -> proc "apt-get" $ "install" : x) <$> listNewPackages px
+  toInstallProcess Arch px = do
+    newPkgs <- listNewPackages px
+    case newPkgs of
+      [] -> return $ proc "echo" ["No packages to install!"]
+      ps -> return $ proc "paru" $ "-S" : ps
+  toInstallProcess Osx px  = do
+    newPkgs <- listNewPackages px
+    case newPkgs of
+      [] -> return $ proc "echo" ["No packages to install!"]
+      ps -> return $ proc "brew" $ "install" : ps
+  toInstallProcess Deb px  = do
+    newPkgs <- listNewPackages px
+    case newPkgs of
+      [] -> return $ proc "echo" ["No packages to install!"]
+      ps -> return $ proc "apt-get" $ "install" : ps
   toInstallProcess _ _     = return $ proc "echo" ["Unsupported distro!"]
 
 instance Cloneable GitPackage where
@@ -58,8 +76,8 @@ instance Cloneable GitPackage where
 instance Installable GitPackage where
   toInstallProcess _ (GitPackage n _ _ _ (Just cmd)) = do
     dir <- (</> n) <$> getXdgDirectory XdgCache "dotf"
-    return $ proc "bash" ["-c", pushPop dir cmd]
-  toInstallProcess _ p = return $ proc "echo" [[i|No install command for GIT package '#{gitName p}'!|]]
+    return $ setWorkingDir dir $ proc "bash" ["-c", cmd]
+  toInstallProcess _ p = return $ proc "echo" [[i|No install command for GIT package '#{gitName p}'|]]
 
 -------------
 -- Methods --
@@ -97,6 +115,18 @@ collectGitPackages = foldr (\b acc -> bundleGitPackages b ++ acc) []
 
 collectScripts :: [Bundle] -> [FilePath]
 collectScripts = foldr (\b acc -> scripts b ++ acc) []
+
+collectPreScripts :: [Bundle] -> [FilePath]
+collectPreScripts = foldr coll []
+  where coll b acc = case bundlePreInstallScript b of
+          (Just s) -> s : acc
+          Nothing  -> acc
+
+collectPostScripts :: [Bundle] -> [FilePath]
+collectPostScripts = foldr coll []
+  where coll b acc = case bundlePostInstallScript b of
+          (Just s) -> s : acc
+          Nothing  -> acc
 
 -----------
 -- Utils --

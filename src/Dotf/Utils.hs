@@ -1,31 +1,29 @@
 module Dotf.Utils (
   editFile,
   which,
-  pushPop,
   distro,
   appendToFile,
   listBundleFiles,
   listInstalledPackages,
   resolveBundleFile,
   resolveScriptFile,
+  resolveScript,
   resolveGitFile
 ) where
 
-import           Control.Exception       (SomeException, try)
-import           Control.Monad           (filterM)
-import           Data.String.Interpolate (i)
-import           Dotf.Types              (Distro (Arch, Deb, Osx, Unsupported))
-import           System.Directory        (XdgDirectory (XdgConfig),
-                                          doesDirectoryExist, doesFileExist,
-                                          getHomeDirectory, getXdgDirectory,
-                                          listDirectory)
-import           System.FilePath         (takeExtension, (</>))
-import           System.Info             (os)
-import           System.IO               (IOMode (WriteMode), withFile)
-import           System.OsRelease        (OsRelease (name),
-                                          OsReleaseResult (osRelease),
-                                          parseOsRelease)
-import           System.Process          (callProcess, readProcess)
+import           Control.Exception (SomeException, try)
+import           Control.Monad     (filterM)
+import           Dotf.Types        (Distro (Arch, Deb, Osx, Unsupported))
+import           System.Directory  (XdgDirectory (XdgConfig),
+                                    doesDirectoryExist, doesFileExist,
+                                    getHomeDirectory, getXdgDirectory,
+                                    listDirectory)
+import           System.FilePath   (takeExtension, (</>))
+import           System.Info       (os)
+import           System.IO         (IOMode (WriteMode), withFile)
+import           System.OsRelease  (OsRelease (name),
+                                    OsReleaseResult (osRelease), parseOsRelease)
+import           System.Process    (callProcess, readProcess)
 
 editFile :: FilePath -> IO ()
 editFile file = callProcess "nvim" [file]
@@ -36,12 +34,6 @@ which cmd = do
   case rs of
     Left _  -> return False
     Right o -> return $ not $ null o
-
-pushPop :: String -> String -> String
-pushPop dir cmd =
-  let push = ["pushd", dir, ">", "/dev/null", "2>&1"]
-      pop  = ["popd", ">", "/dev/null", "2>&1"]
-   in [i|#{unwords push} ; #{cmd} ; #{unwords pop}|]
 
 distro :: IO Distro
 distro = case os of
@@ -99,6 +91,9 @@ resolveBundleFile (Just relName) = do
   baseDir <- getXdgDirectory XdgConfig "dotf"
   return $ Just (baseDir </> "bundles" </> relName)
 resolveBundleFile Nothing = pure Nothing
+
+resolveScript :: String -> IO FilePath
+resolveScript relName = (</> relName) <$> getXdgDirectory XdgConfig "dotf"
 
 resolveScriptFile :: Maybe String -> IO (Maybe FilePath)
 resolveScriptFile (Just relName) = do

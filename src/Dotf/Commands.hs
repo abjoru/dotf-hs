@@ -23,10 +23,26 @@ module Dotf.Commands (
 
 import           Control.Monad        (forM_, void, (>=>))
 import           Data.Either          (fromRight)
-import           Dotf.Bundles
-import           Dotf.Git
-import           Dotf.Types
-import           Dotf.Utils           (appendToFile, distro, pushPop, which)
+import           Dotf.Bundles         (Cloneable (toCloneProcess),
+                                       Installable (toInstallProcess),
+                                       collectGitPackages, collectPackages,
+                                       collectPostScripts, collectPreScripts,
+                                       loadBundles)
+import           Dotf.Git             (gitCloneBareUrl, gitCommit, gitDiffFile,
+                                       gitDiffStatus, gitIgnoreFile,
+                                       gitNewBareRepo, gitPull, gitPush,
+                                       gitStageFile, gitStatus, gitTracked,
+                                       gitTrackedStaged, gitTrackedUnstaged,
+                                       gitUnstageFile, gitUntrackFile,
+                                       gitUntracked, mapEitherM,
+                                       processFileListResult,
+                                       processStringResult)
+import           Dotf.Types           (Distro (Arch, Osx, Unsupported), Dry,
+                                       ErrorOrFilePaths, ErrorOrString,
+                                       ErrorOrTracked, GitPackage, Package,
+                                       TrackedType (..))
+import           Dotf.Utils           (appendToFile, distro, resolveScript,
+                                       which)
 import           System.Directory     (getHomeDirectory)
 import qualified System.Process.Typed as PT
 import           System.Process.Typed (ExitCode)
@@ -47,12 +63,21 @@ installRequirements d = distro >>= osInstall
         osInstall Osx  = installHomebrew d
         osInstall _    = pure ()
 
-installBundles :: Dry -> [Bundle] -> IO ()
-installBundles dry bundles = do
-  dist <- distro
-  let pkgs = collectPackages bundles
-      gits = collectGitPackages bundles
-  installPackages dry dist pkgs >> cloneGitPackages dry gits >> installGitPackages dry gits
+installBundles :: Dry -> IO ()
+installBundles dry = do
+  dist    <- distro
+  bundles <- loadBundles
+  let pkgs    = collectPackages bundles
+      gits    = collectGitPackages bundles
+      pre     = collectPreScripts bundles
+      post    = collectPostScripts bundles
+      preIO   = installPre dry pre
+      pkgIO   = installPackages dry dist pkgs
+      cloneIO = cloneGitPackages dry gits
+      gitIO   = installGitPackages dry gits
+      postIO  = installPost dry post
+
+  preIO >> pkgIO >> cloneIO >> gitIO >> postIO
 
 listTrackedAll :: IO ErrorOrTracked
 listTrackedAll = do
@@ -98,7 +123,7 @@ untrackFile = gitUntrackFile
 diffFile :: FilePath -> IO ErrorOrString
 diffFile fp = processStringResult <$> gitDiffFile fp
 
-commit :: String -> IO ExitCode
+commit :: Dry -> String -> IO ()
 commit = gitCommit
 
 clone :: String -> IO ExitCode
@@ -107,10 +132,10 @@ clone = gitCloneBareUrl
 newBareRepo :: FilePath -> IO ExitCode
 newBareRepo = gitNewBareRepo
 
-push :: IO ExitCode
+push :: Dry -> IO ()
 push = gitPush
 
-pull :: IO ExitCode
+pull :: Dry -> IO ()
 pull = gitPull
 
 status :: IO ExitCode
@@ -127,7 +152,7 @@ installParu :: Dry -> IO ()
 installParu dry = do
   let dir  = "~/.local/share/paru"
       clne = PT.proc "git" ["https://aur.archlinux.org/paru.git", dir]
-      inst = PT.proc "bash" ["-C", pushPop dir "makepkg -si --noconfirm"]
+      inst = PT.setWorkingDir dir $ PT.proc "bash" ["-C", "makepkg -si --noconfirm"]
   if dry
     then print clne >> print inst
     else void $ PT.runProcess clne >> PT.runProcess inst
@@ -146,3 +171,14 @@ cloneGitPackages _ pkgs    = forM_ pkgs (toCloneProcess >=> PT.runProcess)
 installGitPackages :: Dry -> [GitPackage] -> IO ()
 installGitPackages True pkgs = forM_ pkgs (toInstallProcess Unsupported >=> print)
 installGitPackages _ pkgs    = forM_ pkgs (toInstallProcess Unsupported >=> PT.runProcess)
+
+installPre :: Dry -> [FilePath] -> IO ()
+installPre True fp  = forM_ fp (mkScriptProc >=> print)
+installPre False fp = forM_ fp (mkScriptProc >=> PT.runProcess)
+
+installPost :: Dry -> [FilePath] -> IO ()
+installPost True fp  = forM_ fp (mkScriptProc >=> print)
+installPost False fp = forM_ fp (mkScriptProc >=> PT.runProcess)
+
+mkScriptProc :: FilePath -> IO (PT.ProcessConfig () () ())
+mkScriptProc f = (\v -> PT.proc "bash" ["-c", v]) <$> resolveScript f
