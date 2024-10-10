@@ -42,19 +42,20 @@ runArgs [] = ifM checkBareRepo tui informMissingRepo
 runArgs _  = ifM checkBareRepo (runOpts >>= runApp) informMissingRepo
 
 runApp :: Options -> IO ()
-runApp (Options Dry Install)       = installBundles True
-runApp (Options Normal Install)    = installBundles False
-runApp (Options Dry (Init url))    = clone True url
-runApp (Options Normal (Init url)) = clone False url
-runApp (Options Dry New)           = newBareRepo True
-runApp (Options Normal New)        = newBareRepo False
-runApp (Options Dry Pull)          = pull True
-runApp (Options Normal Pull)       = pull False
-runApp (Options Dry Push)          = push True
-runApp (Options Normal Push)       = push False
-runApp (Options Dry (Commit m))    = commit True m
-runApp (Options Normal (Commit m)) = commit False m
-runApp v                           = print v
+runApp (Options Dry Install)          = installBundles True
+runApp (Options Normal Install)       = installBundles False
+runApp (Options Dry (Init url))       = clone True url
+runApp (Options Normal (Init "dotf")) = clone False "https://github.com/abjoru/dotf.git"
+runApp (Options Normal (Init url))    = clone False url
+runApp (Options Dry New)              = newBareRepo True
+runApp (Options Normal New)           = newBareRepo False
+runApp (Options Dry Pull)             = pull True
+runApp (Options Normal Pull)          = pull False
+runApp (Options Dry Push)             = push True
+runApp (Options Normal Push)          = push False
+runApp (Options Dry (Commit m))       = commit True m
+runApp (Options Normal (Commit m))    = commit False m
+runApp v                              = print v
 
 doInstall :: IO ()
 doInstall = askInstall >>= check
