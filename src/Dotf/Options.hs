@@ -21,6 +21,8 @@ data DryMode = Normal | Dry deriving Show
 
 data Command
   = Install
+  | Init String
+  | New
   | Pull
   | Push
   | Commit String
@@ -46,10 +48,20 @@ parseDryMode = flag Normal Dry
 parseCommand :: Parser Command
 parseCommand = hsubparser
   (  command "install" (info (pure Install) (progDesc "Install bundles"))
+  <> command "init" (info parseInit (progDesc "Initialize dot-files bare repo"))
+  <> command "new" (info (pure New) (progDesc "Create a new bare repository"))
   <> command "pull" (info (pure Pull) (progDesc "Pull from upstream"))
   <> command "push" (info (pure Push) (progDesc "Push changes upstream"))
   <> command "commit" (info parseCommit (progDesc "Commit all changes"))
   <> command "git" (info parseGit (progDesc "Run raw git commands"))
+  )
+
+parseInit :: Parser Command
+parseInit = Init <$> strOption
+  (  long "url"
+  <> short 'u'
+  <> metavar "GIT_URL"
+  <> help "Upstream GIT bare repository URL"
   )
 
 parseCommit :: Parser Command

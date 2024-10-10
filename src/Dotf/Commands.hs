@@ -44,15 +44,12 @@ import           Dotf.Types           (Distro (Arch, Osx, Unsupported), Dry,
 import           Dotf.Utils           (appendToFile, distro, resolveScript,
                                        which)
 import           System.Directory     (getHomeDirectory)
+import           System.FilePath      ((</>))
 import qualified System.Process.Typed as PT
 import           System.Process.Typed (ExitCode)
 
-checkRequirements :: Dry -> IO Bool
-checkRequirements True = distro >>= osWhich
-  where osWhich Arch = putStrLn "which paru" >> pure True
-        osWhich Osx  = putStrLn "which brew" >> pure True
-        osWhich _    = pure True
-checkRequirements False = distro >>= osWhich
+checkRequirements :: IO Bool
+checkRequirements = distro >>= osWhich
   where osWhich Arch = which "paru"
         osWhich Osx  = which "brew"
         osWhich _    = pure True
@@ -126,11 +123,13 @@ diffFile fp = processStringResult <$> gitDiffFile fp
 commit :: Dry -> String -> IO ()
 commit = gitCommit
 
-clone :: String -> IO ExitCode
+clone :: Dry -> String -> IO ()
 clone = gitCloneBareUrl
 
-newBareRepo :: FilePath -> IO ExitCode
-newBareRepo = gitNewBareRepo
+newBareRepo :: Dry -> IO ()
+newBareRepo d = do
+  home <- getHomeDirectory
+  gitNewBareRepo d (home </> ".dotf")
 
 push :: Dry -> IO ()
 push = gitPush
@@ -151,7 +150,7 @@ diffState = gitDiffStatus
 installParu :: Dry -> IO ()
 installParu dry = do
   let dir  = "~/.local/share/paru"
-      clne = PT.proc "git" ["https://aur.archlinux.org/paru.git", dir]
+      clne = PT.proc "git" ["clone", "https://aur.archlinux.org/paru.git", dir]
       inst = PT.setWorkingDir dir $ PT.proc "bash" ["-C", "makepkg -si --noconfirm"]
   if dry
     then print clne >> print inst

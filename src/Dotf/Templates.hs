@@ -1,5 +1,6 @@
 module Dotf.Templates (
   bundleFileTemplate,
+  missingRepoMessage
 ) where
 
 import           Data.String.Interpolate (__i)
@@ -48,3 +49,17 @@ bundleFileTemplate name =
       \#submodules: false
       \# [Optional] A package may have an install command
       \#install-cmd: "stack install"|]
+
+missingRepoMessage :: String
+missingRepoMessage =
+  [__i|Error: Missing bare repository for your dotfiles!
+
+  Dotfile directory is set to $HOME/.dotf and is currently
+  missing on your system. This needs to be a GIT bare
+  repository that tracks files in your $HOME directory.
+
+  To connect to an existing GIT bare repository, please use
+  'dotf init -u <url>' where 'url' points to your GIT bare
+  dotfiles repository.
+
+  To create a new dotfile repository, please use 'dotf new'|]

@@ -69,11 +69,13 @@ gitCommit :: Dry -> String -> IO ()
 gitCommit False msg = bare ["commit", "-m", msg] >>= (void . PT.runProcess)
 gitCommit True msg  = bare ["commit", "-m", msg] >>= print
 
-gitCloneBareUrl :: String -> IO PT.ExitCode
-gitCloneBareUrl url = bare ["clone", "--bare", url] >>= PT.runProcess
+gitCloneBareUrl :: Dry -> String -> IO ()
+gitCloneBareUrl False url = bare ["clone", "--bare", url] >>= (void . PT.runProcess)
+gitCloneBareUrl True url = bare ["clone", "--bare", url] >>= print
 
-gitNewBareRepo :: FilePath -> IO PT.ExitCode
-gitNewBareRepo fp = bare ["init", "--bare", fp] >>= PT.runProcess
+gitNewBareRepo :: Dry -> FilePath -> IO ()
+gitNewBareRepo False fp = bare ["init", "--bare", fp] >>= (void . PT.runProcess)
+gitNewBareRepo True fp  = bare ["init", "--bare", fp] >>= print
 
 gitPush :: Dry -> IO ()
 gitPush False = bare ["push"] >>= (void . PT.runProcess)
