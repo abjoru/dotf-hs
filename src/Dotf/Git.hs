@@ -10,6 +10,7 @@ module Dotf.Git (
   gitCommit,
   gitCloneBareUrl,
   gitNewBareRepo,
+  gitCheckoutBare,
   gitPush,
   gitPull,
   gitStatus,
@@ -76,6 +77,10 @@ gitCloneBareUrl False url = do
 gitCloneBareUrl True url = do
   home <- getHomeDirectory
   bare ["clone", "--bare", url, home </> ".dotf"] >>= print
+
+gitCheckoutBare :: Dry -> IO ()
+gitCheckoutBare True  = bare ["checkout"] >>= print
+gitCheckoutBare False = bare ["checkout"] >>= (void . PT.runProcess)
 
 gitNewBareRepo :: Dry -> FilePath -> IO ()
 gitNewBareRepo False fp = bare ["init", "--bare", fp] >>= (void . PT.runProcess)

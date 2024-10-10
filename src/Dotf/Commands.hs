@@ -29,13 +29,13 @@ import           Dotf.Bundles         (Cloneable (toCloneProcess),
                                        collectGitPackages, collectPackages,
                                        collectPostScripts, collectPreScripts,
                                        loadBundles)
-import           Dotf.Git             (gitCloneBareUrl, gitCommit, gitDiffFile,
-                                       gitDiffStatus, gitIgnoreFile,
-                                       gitNewBareRepo, gitPull, gitPush,
-                                       gitStageFile, gitStatus, gitTracked,
-                                       gitTrackedStaged, gitTrackedUnstaged,
-                                       gitUnstageFile, gitUntrackFile,
-                                       gitUntracked, mapEitherM,
+import           Dotf.Git             (gitCheckoutBare, gitCloneBareUrl,
+                                       gitCommit, gitDiffFile, gitDiffStatus,
+                                       gitIgnoreFile, gitNewBareRepo, gitPull,
+                                       gitPush, gitStageFile, gitStatus,
+                                       gitTracked, gitTrackedStaged,
+                                       gitTrackedUnstaged, gitUnstageFile,
+                                       gitUntrackFile, gitUntracked, mapEitherM,
                                        processFileListResult,
                                        processStringResult)
 import           Dotf.Types           (Distro (Arch, Osx, Unsupported), Dry,
@@ -126,7 +126,7 @@ commit :: Dry -> String -> IO ()
 commit = gitCommit
 
 clone :: Dry -> String -> IO ()
-clone = gitCloneBareUrl
+clone d url = gitCloneBareUrl d url >> gitCheckoutBare d
 
 newBareRepo :: Dry -> IO ()
 newBareRepo d = do
