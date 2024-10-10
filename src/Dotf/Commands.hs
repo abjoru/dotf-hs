@@ -22,6 +22,7 @@ module Dotf.Commands (
 ) where
 
 import           Control.Monad        (forM_, void, (>=>))
+import           Control.Monad.Extra  (whenM)
 import           Data.Either          (fromRight)
 import           Dotf.Bundles         (Cloneable (toCloneProcess),
                                        Installable (toInstallProcess),
@@ -43,7 +44,8 @@ import           Dotf.Types           (Distro (Arch, Osx, Unsupported), Dry,
                                        TrackedType (..))
 import           Dotf.Utils           (appendToFile, distro, resolveScript,
                                        which)
-import           System.Directory     (getHomeDirectory)
+import           System.Directory     (createDirectoryIfMissing,
+                                       doesDirectoryExist, getHomeDirectory)
 import           System.FilePath      ((</>))
 import qualified System.Process.Typed as PT
 import           System.Process.Typed (ExitCode)
@@ -152,6 +154,7 @@ installParu dry = do
   let dir  = "~/.local/share/paru"
       clne = PT.proc "git" ["clone", "https://aur.archlinux.org/paru.git", dir]
       inst = PT.setWorkingDir dir $ PT.proc "bash" ["-C", "makepkg -si --noconfirm"]
+  whenM (doesDirectoryExist dir) (createDirectoryIfMissing True dir)
   if dry
     then print clne >> print inst
     else void $ PT.runProcess clne >> PT.runProcess inst
