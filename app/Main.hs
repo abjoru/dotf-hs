@@ -39,7 +39,10 @@ checkBareRepo = do
 
 runArgs :: [String] -> IO ()
 runArgs [] = ifM checkBareRepo tui informMissingRepo
-runArgs _  = ifM checkBareRepo (runOpts >>= runApp) informMissingRepo
+runArgs args
+  | "init" `elem` args = runOpts >>= runApp
+  | "new" `elem` args  = runOpts >>= runApp
+  | otherwise = ifM checkBareRepo (runOpts >>= runApp) informMissingRepo
 
 runApp :: Options -> IO ()
 runApp (Options Dry Install)          = installBundles True
