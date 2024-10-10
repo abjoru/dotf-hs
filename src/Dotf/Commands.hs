@@ -151,7 +151,8 @@ diffState = gitDiffStatus
 
 installParu :: Dry -> IO ()
 installParu dry = do
-  let dir  = "~/.local/share/paru"
+  home <- getHomeDirectory
+  let dir  = home </> ".local" </> "share" </> "paru"
       clne = PT.proc "git" ["clone", "https://aur.archlinux.org/paru.git", dir]
       inst = PT.setWorkingDir dir $ PT.proc "bash" ["-C", "makepkg -si --noconfirm"]
   whenM (doesDirectoryExist dir) (createDirectoryIfMissing True dir)
