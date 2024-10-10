@@ -26,6 +26,8 @@ data Command
   | Pull
   | Push
   | Commit String
+  | Diff
+  | Status
   | Git String
   deriving Show
 
@@ -53,6 +55,8 @@ parseCommand = hsubparser
   <> command "pull" (info (pure Pull) (progDesc "Pull from upstream"))
   <> command "push" (info (pure Push) (progDesc "Push changes upstream"))
   <> command "commit" (info parseCommit (progDesc "Commit all changes"))
+  <> command "diff" (info (pure Diff) (progDesc "Show file diff for dot-files"))
+  <> command "status" (info (pure Status) (progDesc "Show file status for dot-files"))
   <> command "git" (info parseGit (progDesc "Run raw git commands"))
   )
 

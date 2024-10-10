@@ -94,11 +94,13 @@ gitPull :: Dry -> IO ()
 gitPull False = bare ["pull"] >>= (void . PT.runProcess)
 gitPull True  = bare ["pull"] >>= print
 
-gitStatus :: IO PT.ExitCode
-gitStatus = bare ["status", "-sb"] >>= PT.runProcess
+gitStatus :: Dry -> IO ()
+gitStatus False = bare ["status", "-sb"] >>= (void . PT.runProcess)
+gitStatus True  = bare ["status", "-sb"] >>= print
 
-gitDiffStatus :: IO PT.ExitCode
-gitDiffStatus = bare ["diff"] >>= PT.runProcess
+gitDiffStatus :: Dry -> IO ()
+gitDiffStatus False = bare ["diff"] >>= (void . PT.runProcess)
+gitDiffStatus True  = bare ["diff"] >>= print
 
 -----------
 -- Utils --

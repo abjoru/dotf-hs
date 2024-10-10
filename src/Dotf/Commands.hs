@@ -139,10 +139,10 @@ push = gitPush
 pull :: Dry -> IO ()
 pull = gitPull
 
-status :: IO ExitCode
+status :: Dry -> IO ()
 status = gitStatus
 
-diffState :: IO ExitCode
+diffState :: Dry -> IO ()
 diffState = gitDiffStatus
 
 -----------
@@ -161,7 +161,12 @@ installParu dry = do
     else void $ PT.runProcess clne >> PT.runProcess inst
 
 installHomebrew :: Dry -> IO ()
-installHomebrew _ = fail "Not implemented!"
+installHomebrew dry = do
+  let curl = "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      proc = PT.proc "bash" ["-c", curl]
+  if dry
+    then print proc
+    else void $ PT.runProcess proc
 
 installPackages :: Dry -> Distro -> [Package] -> IO ()
 installPackages True d pkgs = toInstallProcess d pkgs >>= print

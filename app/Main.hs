@@ -5,7 +5,8 @@ import           Data.Char           (isLetter, toLower)
 import           Dotf.Commands       (checkRequirements, clone, commit,
                                       installBundles, installRequirements,
                                       newBareRepo, pull, push)
-import           Dotf.Options        (Command (Commit, Init, Install, New, Pull, Push),
+import           Dotf.Git            (gitDiffStatus, gitStatus)
+import           Dotf.Options        (Command (Commit, Diff, Init, Install, New, Pull, Push, Status),
                                       DryMode (Dry, Normal), Options (Options),
                                       runOpts)
 import           Dotf.Templates      (missingRepoMessage)
@@ -58,6 +59,10 @@ runApp (Options Dry Push)             = push True
 runApp (Options Normal Push)          = push False
 runApp (Options Dry (Commit m))       = commit True m
 runApp (Options Normal (Commit m))    = commit False m
+runApp (Options Dry Diff)             = gitDiffStatus True
+runApp (Options Normal Diff)          = gitDiffStatus False
+runApp (Options Dry Status)           = gitStatus True
+runApp (Options Normal Status)        = gitStatus False
 runApp v                              = print v
 
 doInstall :: IO ()
