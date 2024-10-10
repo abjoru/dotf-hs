@@ -111,6 +111,7 @@ dotfHelp = border . hCenter $
             <+> tip "q:" " Quit"
             ) <=>
     hCenter (   tip "e:" " Edit  "
+            <+> tip "d:" " Diff "
             <+> tip "a:" " Show All  "
             <+> tip "c:" " Commit  "
             <+> tip "A/R:" " Add/Remove File  "

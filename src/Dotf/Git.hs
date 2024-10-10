@@ -24,10 +24,10 @@ module Dotf.Git (
 import           Control.Monad              (void)
 import qualified Data.ByteString.Lazy       as B
 import qualified Data.ByteString.Lazy.Char8 as C8
-import           Data.String.Interpolate    (i)
 import           Dotf.Types                 (Dry, ErrorOrFilePaths,
                                              ErrorOrString, GitError (GitError),
                                              TrackedType)
+import           Dotf.Utils
 import           System.Directory           (doesFileExist, doesPathExist,
                                              getHomeDirectory)
 import           System.FilePath            ((</>))
@@ -103,15 +103,6 @@ gitDiffStatus = bare ["diff"] >>= PT.runProcess
 -----------
 -- Utils --
 -----------
-
-gitIgnoreFile :: FilePath -> FilePath
-gitIgnoreFile base = base </> ".gitignore"
-
-gitDir :: FilePath -> String
-gitDir homeDir = [i|--git-dir=#{homeDir </> ".dotf"}|]
-
-workTree :: FilePath -> String
-workTree homeDir = [i|--work-tree=#{homeDir}|]
 
 bare :: [String] -> IO (PT.ProcessConfig () () ())
 bare args = do

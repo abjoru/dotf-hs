@@ -37,6 +37,7 @@ module Tui.State (
   syncUntracked,
   selectBundle,
   maybeEditFile,
+  maybeDiffFile
 ) where
 
 import           Brick               (get, suspendAndResume)
@@ -286,3 +287,8 @@ maybeEditFile Nothing = return ()
 maybeEditFile (Just fp) = do
   state <- get
   suspendAndResume $ editFile fp >> pure state
+
+maybeDiffFile :: Maybe FilePath -> DEvent ()
+maybeDiffFile maybeFile = do
+  state <- get
+  suspendAndResume $ maybeDiff maybeFile >> pure state

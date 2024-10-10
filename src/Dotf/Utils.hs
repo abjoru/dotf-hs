@@ -1,5 +1,9 @@
 module Dotf.Utils (
   editFile,
+  gitIgnoreFile,
+  gitDir,
+  workTree,
+  maybeDiff,
   which,
   distro,
   appendToFile,
@@ -11,22 +15,47 @@ module Dotf.Utils (
   resolveGitFile
 ) where
 
-import           Control.Exception (SomeException, try)
-import           Control.Monad     (filterM)
-import           Dotf.Types        (Distro (Arch, Deb, Osx, Unsupported))
-import           System.Directory  (XdgDirectory (XdgConfig),
-                                    doesDirectoryExist, doesFileExist,
-                                    getHomeDirectory, getXdgDirectory,
-                                    listDirectory)
-import           System.FilePath   (takeExtension, (</>))
-import           System.Info       (os)
-import           System.IO         (IOMode (WriteMode), withFile)
-import           System.OsRelease  (OsRelease (name),
-                                    OsReleaseResult (osRelease), parseOsRelease)
-import           System.Process    (callProcess, readProcess)
+import           Control.Exception       (SomeException, try)
+import           Control.Monad           (filterM)
+import           Data.String.Interpolate (i)
+import           Dotf.Types              (Distro (Arch, Deb, Osx, Unsupported))
+import           System.Directory        (XdgDirectory (XdgConfig),
+                                          doesDirectoryExist, doesFileExist,
+                                          getHomeDirectory, getXdgDirectory,
+                                          listDirectory)
+import           System.FilePath         (takeExtension, (</>))
+import           System.Info             (os)
+import           System.IO               (IOMode (WriteMode), hClose, withFile)
+import           System.OsRelease        (OsRelease (name),
+                                          OsReleaseResult (osRelease),
+                                          parseOsRelease)
+import           System.Process
 
 editFile :: FilePath -> IO ()
 editFile file = callProcess "nvim" [file]
+
+gitIgnoreFile :: FilePath -> FilePath
+gitIgnoreFile base = base </> ".gitignore"
+
+gitDir :: String -> String
+gitDir d   = [i|--git-dir=#{d </> ".dotf"}|]
+
+workTree :: String -> String
+workTree d = [i|--work-tree=#{d}|]
+
+maybeDiff :: Maybe FilePath -> IO ()
+maybeDiff mf = do
+  home <- getHomeDirectory
+  let args = args' home mf
+  (_, Just out, _, ph1) <- createProcess (proc "git" args) { std_out = CreatePipe, cwd = Just home }
+  (_, _, _, ph2) <- createProcess (proc "less" ["-R"]) { std_in = UseHandle out }
+
+  hClose out
+  _ <- waitForProcess ph1
+  _ <- waitForProcess ph2
+  return ()
+  where args' h Nothing  = [gitDir h, workTree h, "diff", "--color"]
+        args' h (Just f) = [gitDir h, workTree h, "diff", "--color", h </> f]
 
 which :: String -> IO Bool
 which cmd = do

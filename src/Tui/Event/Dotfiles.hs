@@ -22,6 +22,7 @@ dotfilesEvent :: Focus -> Event -> DEvent ()
 dotfilesEvent _ (EvKey (KChar 'a') [])          = doShowToggle
 dotfilesEvent f (EvKey KEsc [])                 = doUnselect f
 dotfilesEvent FTracked (EvKey (KChar 'e') [])   = doEditTracked
+dotfilesEvent _ (EvKey (KChar 'd') [])          = doDiff
 dotfilesEvent FTracked (EvKey (KChar 'l') [])   = doFocusRight
 dotfilesEvent FTracked (EvKey (KChar 'R') [])   = doRemoveFile
 dotfilesEvent FTracked (EvKey (KChar 'A') [])   = doAddFile
@@ -68,6 +69,12 @@ doEditUntracked = do
   state <- get
   file  <- liftIO $ resolveGitFile (untrackedSel state)
   maybeEditFile file
+
+doDiff :: DEvent ()
+doDiff = do
+  state <- get
+  file  <- liftIO $ resolveGitFile (trackedSelFilePath state)
+  maybeDiffFile file
 
 doFocusLeft :: DEvent ()
 doFocusLeft = do
