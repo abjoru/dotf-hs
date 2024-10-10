@@ -70,8 +70,12 @@ gitCommit False msg = bare ["commit", "-m", msg] >>= (void . PT.runProcess)
 gitCommit True msg  = bare ["commit", "-m", msg] >>= print
 
 gitCloneBareUrl :: Dry -> String -> IO ()
-gitCloneBareUrl False url = bare ["clone", "--bare", url] >>= (void . PT.runProcess)
-gitCloneBareUrl True url = bare ["clone", "--bare", url] >>= print
+gitCloneBareUrl False url = do
+  home <- getHomeDirectory
+  bare ["clone", "--bare", url, home </> ".dotf"] >>= (void . PT.runProcess)
+gitCloneBareUrl True url = do
+  home <- getHomeDirectory
+  bare ["clone", "--bare", url, home </> ".dotf"] >>= print
 
 gitNewBareRepo :: Dry -> FilePath -> IO ()
 gitNewBareRepo False fp = bare ["init", "--bare", fp] >>= (void . PT.runProcess)

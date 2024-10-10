@@ -48,7 +48,7 @@ runApp :: Options -> IO ()
 runApp (Options Dry Install)          = installBundles True
 runApp (Options Normal Install)       = installBundles False
 runApp (Options Dry (Init url))       = clone True url
-runApp (Options Normal (Init "dotf")) = clone False "https://github.com/abjoru/dotf.git"
+runApp (Options Normal (Init "dotf")) = clone False "git@github.com:abjoru/dotf.git"
 runApp (Options Normal (Init url))    = clone False url
 runApp (Options Dry New)              = newBareRepo True
 runApp (Options Normal New)           = newBareRepo False
