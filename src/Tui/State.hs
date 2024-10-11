@@ -28,6 +28,8 @@ module Tui.State (
   ignoreL,
   newBundleEditL,
   newBundleL,
+  filterEditL,
+  filterL,
   errorL,
   tabL,
   showAllTrackedL,
@@ -40,9 +42,11 @@ module Tui.State (
   maybeDiffFile
 ) where
 
+import Text.Regex.PCRE 
+import Data.Text.Zipper (getText)
 import           Brick               (get, suspendAndResume)
 import           Brick.Types         (EventM)
-import           Brick.Widgets.Edit  (Editor, editor)
+import           Brick.Widgets.Edit  (Editor, editor, editContentsL)
 import           Brick.Widgets.List  (listElementsL)
 import qualified Brick.Widgets.List  as L
 import           Control.Monad.State (MonadIO (liftIO))
@@ -71,6 +75,7 @@ data RName
   | RScriptList
   | RIgnoreEditor
   | RNewBundleEditor
+  | RFilterEditor
   deriving (Eq, Ord, Show)
 
 data Focus
@@ -113,6 +118,8 @@ data State = State
   , _ignore         :: Bool
   , _newBundleEdit  :: Editor String RName
   , _newBundle      :: Bool
+  , _filterEdit     :: Editor String RName
+  , _filter         :: Bool
   , _error          :: Maybe GitError
   , _popup          :: Maybe (Popup DialogChoice RName)
   , _tab            :: Tab
@@ -137,6 +144,8 @@ emptyState =
     , _ignore = False
     , _newBundleEdit = editor RNewBundleEditor Nothing ""
     , _newBundle = False
+    , _filterEdit = editor RFilterEditor Nothing ""
+    , _filter = False
     , _error = Nothing
     , _popup = Nothing
     , _tab = DotfileTab
@@ -235,6 +244,12 @@ newBundleEditL = lens _newBundleEdit (\s e -> s{_newBundleEdit = e})
 newBundleL :: Lens' State Bool
 newBundleL = lens _newBundle (\s b -> s{_newBundle = b})
 
+filterEditL :: Lens' State (Editor String RName)
+filterEditL = lens _filterEdit (\s b -> s{_filterEdit = b})
+
+filterL :: Lens' State Bool
+filterL = lens _filter (\s b -> s{_filter = b})
+
 errorL :: Lens' State (Maybe GitError)
 errorL = lens _error (\s me -> s{_error = me})
 
@@ -274,13 +289,21 @@ syncDotfiles = syncTracked >> syncUntracked
 syncTracked :: DEvent ()
 syncTracked = do
   s        <- use showAllTrackedL
+  filterEd <- use filterEditL
   files    <- liftIO $ unsafeListTracked s
-  trackedL .= L.list RTrackedList (V.fromList files) 1
+
+  case head $ getText $ filterEd ^. editContentsL of
+    "" -> trackedL .= L.list RTrackedList (mkTrackedList Nothing files) 1
+    v  -> trackedL .= L.list RTrackedList (mkTrackedList (Just v) files) 1
 
 syncUntracked :: DEvent ()
 syncUntracked = do
-  files      <- liftIO unsafeListUntracked
-  untrackedL .= L.list RUntrackedList (V.fromList files) 1
+  filterEd <- use filterEditL
+  files    <- liftIO unsafeListUntracked
+
+  case head $ getText $ filterEd ^. editContentsL of
+    "" -> untrackedL .= L.list RUntrackedList (mkFileList Nothing files) 1
+    v  -> untrackedL .= L.list RUntrackedList (mkFileList (Just v) files) 1
 
 maybeEditFile :: Maybe FilePath -> DEvent ()
 maybeEditFile Nothing = return ()
@@ -292,3 +315,11 @@ maybeDiffFile :: Maybe FilePath -> DEvent ()
 maybeDiffFile maybeFile = do
   state <- get
   suspendAndResume $ maybeDiff maybeFile >> pure state
+
+mkFileList :: Maybe String -> [FilePath] -> V.Vector FilePath
+mkFileList Nothing raw  = V.fromList raw
+mkFileList (Just f) raw = V.fromList $ filter (=~ f) raw
+
+mkTrackedList :: Maybe String -> [TrackedType] -> V.Vector TrackedType
+mkTrackedList Nothing raw = V.fromList raw
+mkTrackedList (Just f) raw = V.fromList $ filter (\v -> show v =~ f) raw

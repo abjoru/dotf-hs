@@ -42,6 +42,7 @@ dependencies:
 - vector
 - text-zipper
 - optparse-applicative
+- regex-pcre
 
 default-extensions:
 - OverloadedStrings

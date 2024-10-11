@@ -79,10 +79,11 @@ ui st = maybe [drawUi] (\p -> [renderPopup p, drawUi]) (_popup st)
     BundleTab  -> bundleTab st
 
 dotfileTab :: State -> Widget RName
-dotfileTab s = drawUi $ _ignore s
+dotfileTab s = drawUi (_ignore s) (_filter s)
  where
-  drawUi False = tabComp <=> (trackedComp <+> untrackedComp) <=> dotfHelp
-  drawUi True = tabComp <=> (trackedComp <+> untrackedComp) <=> ignoreComp s <=> dotfHelp
+  drawUi False False = tabComp <=> (trackedComp <+> untrackedComp) <=> dotfHelp
+  drawUi True _      = tabComp <=> (trackedComp <+> untrackedComp) <=> ignoreComp s <=> dotfHelp
+  drawUi _ True      = tabComp <=> (trackedComp <+> untrackedComp) <=> filterComp s <=> dotfHelp
   tabComp = tabLine DotfileTab ver
   tcount = countTracked s
   ucount = countUntracked s
@@ -103,11 +104,16 @@ ignoreComp :: State -> Widget RName
 ignoreComp state = border $ withAttr attrTitle $ str "Ignore: " <+> (hLimitPercent 100 . vLimit 1 $ editor)
  where editor = renderEditor (str . unlines) (state ^. ignoreL) (state ^. ignoreEditL)
 
+filterComp :: State -> Widget RName
+filterComp state = border $ withAttr attrTitle $ str "Filter (regex): " <+> (hLimitPercent 100 . vLimit 1 $ editor)
+  where editor = renderEditor (str . unlines) (state ^. filterL) (state ^. filterEditL)
+
 dotfHelp :: Widget RName
 dotfHelp = border . hCenter $
     hCenter (   tip "j/k:" " Up/Down  "
             <+> tip "Ctrl+h/l:" " Switch Left/Right  "
             <+> tip "(Shift) Tab:" " Switch Focus  "
+            <+> tip "f/F" " Filter/Clear "
             <+> tip "q:" " Quit"
             ) <=>
     hCenter (   tip "e:" " Edit  "

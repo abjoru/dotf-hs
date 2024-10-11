@@ -26,6 +26,8 @@ dotfilesEvent _ (EvKey (KChar 'd') [])          = doDiff
 dotfilesEvent FTracked (EvKey (KChar 'l') [])   = doFocusRight
 dotfilesEvent FTracked (EvKey (KChar 'R') [])   = doRemoveFile
 dotfilesEvent FTracked (EvKey (KChar 'A') [])   = doAddFile
+dotfilesEvent _ (EvKey (KChar 'f') []) = doEditFilter
+dotfilesEvent _ (EvKey (KChar 'F') []) = doClearFilter
 dotfilesEvent FTracked ev                       = trackedListEvent ev
 dotfilesEvent FUntracked (EvKey (KChar 'e') []) = doEditUntracked
 dotfilesEvent FUntracked (EvKey (KChar 'h') []) = doFocusLeft
@@ -52,11 +54,8 @@ doUnselect _          = return ()
 doShowToggle :: DEvent ()
 doShowToggle = do
   s <- use showAllTrackedL
-  r <- liftIO $ do
-    rs <- unsafeListTracked (not s)
-    return $ list RTrackedList (V.fromList rs) 1
-  trackedL .= r
   showAllTrackedL .= not s
+  syncTracked
 
 doEditTracked :: DEvent ()
 doEditTracked = do
@@ -114,6 +113,15 @@ doTrackFile = get >>= byFile . untrackedSel
 
 doIgnoreFile :: DEvent ()
 doIgnoreFile = get >>= setIgnoreFile . untrackedSel
+
+doEditFilter :: DEvent ()
+doEditFilter = filterL .= True
+
+doClearFilter :: DEvent ()
+doClearFilter = do
+  filterL .= False
+  zoom filterEditL $ editContentsL .= stringZipper [""] Nothing
+  syncDotfiles
 
 -----------
 -- Utils --

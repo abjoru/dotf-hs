@@ -13,6 +13,7 @@ import           Tui.Event.Dotfiles  (dotfilesEvent)
 import           Tui.Event.Ignore    (editIgnoreEvent)
 import           Tui.Event.NewBundle (newBundleEvent)
 import           Tui.State
+import Tui.Event.Filter (editFilterEvent)
 
 --------------------
 -- Event Handlers --
@@ -22,11 +23,13 @@ handleEvents :: BrickEvent RName e -> DEvent ()
 handleEvents ev@(VtyEvent e) = do
   tab       <- use tabL
   ignore    <- use ignoreL
+  filter'   <- use filterL
   newBundle <- use newBundleL
-  case (tab, ignore, newBundle) of
-    (DotfileTab, True, _) -> editIgnoreEvent ev
-    (BundleTab, _, True)  -> newBundleEvent ev
-    _                     -> appEvent e
+  case (tab, ignore, newBundle, filter') of
+    (DotfileTab, True, _, _) -> editIgnoreEvent ev
+    (BundleTab, _, True, _)  -> newBundleEvent ev
+    (DotfileTab, _, _, True) -> editFilterEvent ev
+    _                        -> appEvent e
 handleEvents _ = return ()
 
 appEvent :: Event -> DEvent ()
