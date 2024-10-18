@@ -67,8 +67,9 @@ instance Cloneable GitPackage where
     cfg <- readOverrides
     dir <- getGitInstallPath cfg pkg
     upd <- doesDirectoryExist dir
-    _   <- createDirectoryIfMissing True dir
-    return $ setWorkingDir dir $ proc "git" (args dir upd pkg)
+    if upd
+      then return $ setWorkingDir dir $ proc "git" (args dir upd pkg)
+      else return $ proc "git" (args dir upd pkg)
     where args _ True (GitPackage _ _ _ True _)      = ["pull", "--recurse-submodules"]
           args _ True _                              = ["pull"]
           args d _ (GitPackage _ u Nothing False _)  = ["clone", u, d]
