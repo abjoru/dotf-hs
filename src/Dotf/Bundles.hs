@@ -21,8 +21,9 @@ import           Dotf.Types              (Bundle (bundleGitPackages, bundleOsPac
                                           Distro (Arch, Deb, Osx),
                                           GitPackage (GitPackage, gitName),
                                           NamedPackage (..), Package (Package))
-import           Dotf.Utils              (distro, listBundleFiles,
-                                          listInstalledPackages)
+import           Dotf.Utils              (distro, getGitInstallPath,
+                                          listBundleFiles,
+                                          listInstalledPackages, readOverrides)
 import           System.Directory        (XdgDirectory (XdgCache, XdgConfig),
                                           createDirectoryIfMissing,
                                           doesDirectoryExist, getXdgDirectory)
@@ -63,9 +64,11 @@ instance Installable [Package] where
 
 instance Cloneable GitPackage where
   toCloneProcess pkg = do
-    dir <- (</> gitName pkg) <$> getXdgDirectory XdgCache "dotf"
+    cfg <- readOverrides
+    dir <- getGitInstallPath cfg pkg
     upd <- doesDirectoryExist dir
-    return $ proc "git" (args dir upd pkg)
+    _   <- createDirectoryIfMissing True dir
+    return $ setWorkingDir dir $ proc "git" (args dir upd pkg)
     where args _ True (GitPackage _ _ _ True _)      = ["pull", "--recurse-submodules"]
           args _ True _                              = ["pull"]
           args d _ (GitPackage _ u Nothing False _)  = ["clone", u, d]
@@ -74,8 +77,9 @@ instance Cloneable GitPackage where
           args d _ (GitPackage _ u (Just b) True _)  = ["clone", "--recurse-submodules", "-b", b, u, d]
 
 instance Installable GitPackage where
-  toInstallProcess _ (GitPackage n _ _ _ (Just cmd)) = do
-    dir <- (</> n) <$> getXdgDirectory XdgCache "dotf"
+  toInstallProcess _ pkg@(GitPackage _ _ _ _ (Just cmd)) = do
+    cfg <- readOverrides
+    dir <- getGitInstallPath cfg pkg
     return $ setWorkingDir dir $ proc "bash" ["-c", cmd]
   toInstallProcess _ p = return $ proc "echo" [[i|No install command for GIT package '#{gitName p}'|]]
 

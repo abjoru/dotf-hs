@@ -8,7 +8,7 @@ import           Graphics.Vty        (Event (EvKey), Key (KEnter, KEsc))
 import           Lens.Micro          ((^.))
 import           Lens.Micro.Mtl      (use, zoom, (.=))
 
-import           Dotf.Commands
+import qualified Dotf.Commands       as CMD
 import           Tui.State
 
 --------------------
@@ -33,5 +33,5 @@ doSubmitIgnore :: DEvent ()
 doSubmitIgnore = do
   ed <- use ignoreEditL
   let content = ed ^. editContentsL
-  liftIO $ ignoreFile (head $ getText content)
+  liftIO $ CMD.ignoreFile (head $ getText content)
   syncUntracked >> doExitIgnore

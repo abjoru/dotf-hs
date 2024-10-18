@@ -5,7 +5,7 @@ import           Brick         (App (..), CursorLocation, defaultMain,
 import           Brick.Themes  (themeToAttrMap)
 import           Control.Monad (void)
 import           Dotf.Bundles  (loadBundles)
-import           Dotf.Commands (listTracked, listUntracked)
+import qualified Dotf.Commands as CMD
 import           Dotf.Types    (GitError, TrackedType)
 import           Lens.Micro    ((^.))
 import           Tui.Events    (handleEvents)
@@ -32,10 +32,10 @@ appCursor state r = case state ^. focusL of
   _                -> Nothing
 
 loadTracked :: IO [TrackedType]
-loadTracked = resultOrDie <$> listTracked
+loadTracked = resultOrDie <$> CMD.listTracked
 
 loadUntracked :: IO [FilePath]
-loadUntracked = resultOrDie <$> listUntracked
+loadUntracked = resultOrDie <$> CMD.listUntracked
 
 resultOrDie :: Either GitError [a] -> [a]
 resultOrDie (Right v) = v

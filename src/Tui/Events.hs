@@ -9,11 +9,12 @@ import           Brick.Widgets.List  (listSelectedL)
 import           Graphics.Vty
 import           Lens.Micro.Mtl      (use, zoom, (.=))
 import           Tui.Event.Bundles   (bundlesEvent)
+import           Tui.Event.Commit    (editCommitEvent)
 import           Tui.Event.Dotfiles  (dotfilesEvent)
+import           Tui.Event.Filter    (editFilterEvent)
 import           Tui.Event.Ignore    (editIgnoreEvent)
 import           Tui.Event.NewBundle (newBundleEvent)
 import           Tui.State
-import Tui.Event.Filter (editFilterEvent)
 
 --------------------
 -- Event Handlers --
@@ -25,11 +26,13 @@ handleEvents ev@(VtyEvent e) = do
   ignore    <- use ignoreL
   filter'   <- use filterL
   newBundle <- use newBundleL
-  case (tab, ignore, newBundle, filter') of
-    (DotfileTab, True, _, _) -> editIgnoreEvent ev
-    (BundleTab, _, True, _)  -> newBundleEvent ev
-    (DotfileTab, _, _, True) -> editFilterEvent ev
-    _                        -> appEvent e
+  commit'   <- use commitL
+  case (tab, ignore, newBundle, filter', commit') of
+    (DotfileTab, True, _, _, _) -> editIgnoreEvent ev
+    (BundleTab, _, True, _, _)  -> newBundleEvent ev
+    (DotfileTab, _, _, True, _) -> editFilterEvent ev
+    (DotfileTab, _, _, _, True) -> editCommitEvent ev
+    _                           -> appEvent e
 handleEvents _ = return ()
 
 appEvent :: Event -> DEvent ()

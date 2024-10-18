@@ -12,14 +12,22 @@ module Dotf.Utils (
   resolveBundleFile,
   resolveScriptFile,
   resolveScript,
-  resolveGitFile
+  resolveGitFile,
+  readOverrides,
+  getGitInstallPath
 ) where
 
 import           Control.Exception       (SomeException, try)
 import           Control.Monad           (filterM)
+import           Control.Monad.Extra     (ifM)
+import qualified Data.ConfigFile         as CF
+import           Data.Either             (fromRight)
+import           Data.Either.Utils       (forceEither)
+import qualified Data.Map                as M
 import           Data.String.Interpolate (i)
-import           Dotf.Types              (Distro (Arch, Deb, Osx, Unsupported))
-import           System.Directory        (XdgDirectory (XdgConfig),
+import           Dotf.Types              (Distro (Arch, Deb, Osx, Unsupported),
+                                          GitPackage, gitName)
+import           System.Directory        (XdgDirectory (XdgCache, XdgConfig),
                                           doesDirectoryExist, doesFileExist,
                                           getHomeDirectory, getXdgDirectory,
                                           listDirectory)
@@ -105,15 +113,12 @@ listInstalledPackages Deb = do
 listInstalledPackages _ = pure []
 
 listFilesInDir :: FilePath -> (FilePath -> Bool) -> IO [FilePath]
-listFilesInDir dir f = do
-  exists <- doesDirectoryExist dir
-  if not exists
-    then return []
-    else do
-      relativePaths <- listDirectory dir
-      let absPaths = map (dir </>) relativePaths
-      files <- filterM doesFileExist absPaths
-      return $ filter f files
+listFilesInDir dir f = ifM (doesDirectoryExist dir) lsf (pure [])
+  where lsf = do
+          relPath <- listDirectory dir
+          let absPath = map (dir </>) relPath
+          files <- filterM doesFileExist absPath
+          return $ filter f files
 
 resolveBundleFile :: Maybe String -> IO (Maybe FilePath)
 resolveBundleFile (Just relName) = do
@@ -135,3 +140,21 @@ resolveGitFile (Just relPath) = do
   homeDir <- getHomeDirectory
   return $ Just (homeDir </> relPath)
 resolveGitFile Nothing = pure Nothing
+
+readOverrides :: IO (M.Map CF.OptionSpec String)
+readOverrides = do
+  base <- getXdgDirectory XdgConfig "dotf"
+  let file = base </> "overrides.cfg"
+  ifM (doesFileExist file) (readMap file) (pure M.empty)
+  where readMap f = do
+          cfg <- CF.readfile CF.emptyCP f
+          return $ toMap $ fromRight CF.emptyCP cfg
+        toMap cp = M.fromList $ forceEither $ CF.items cp "DEFAULT"
+
+getGitInstallPath :: M.Map CF.OptionSpec String -> GitPackage -> IO FilePath
+getGitInstallPath m pkg = do
+  home <- getHomeDirectory
+  cache <- getXdgDirectory XdgCache "dotf"
+  return $ case M.lookup (gitName pkg) m of
+    Just p  -> home </> p
+    Nothing -> cache </> gitName pkg

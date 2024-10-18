@@ -100,7 +100,6 @@ instance Path TrackedType where
 instance Show GitError where
   show err = concat ["Error occurred: ", show (errorCode err), " - ", C8.unpack (errorMessage err)]
 
-
 instance FromJSON Package where
   parseJSON (Y.Object o) =
     Package <$> o .:? "arch"

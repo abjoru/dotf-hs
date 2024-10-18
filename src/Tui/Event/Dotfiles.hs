@@ -2,12 +2,11 @@ module Tui.Event.Dotfiles (dotfilesEvent) where
 
 import           Brick
 import           Brick.Widgets.Edit  (editContentsL)
-import           Brick.Widgets.List  (handleListEvent, handleListEventVi, list,
+import           Brick.Widgets.List  (handleListEvent, handleListEventVi,
                                       listSelectedL)
 import           Control.Monad.State (MonadIO (liftIO))
 import           Data.Text.Zipper    (stringZipper)
-import qualified Data.Vector         as V
-import           Dotf.Commands
+import         qualified  Dotf.Commands as CMD
 import           Dotf.Types
 import           Dotf.Utils
 import           Graphics.Vty        (Event (EvKey), Key (KChar, KEsc))
@@ -20,14 +19,15 @@ import           Tui.State
 
 dotfilesEvent :: Focus -> Event -> DEvent ()
 dotfilesEvent _ (EvKey (KChar 'a') [])          = doShowToggle
+dotfilesEvent _ (EvKey (KChar 'c') [])          = doCommit
 dotfilesEvent f (EvKey KEsc [])                 = doUnselect f
 dotfilesEvent FTracked (EvKey (KChar 'e') [])   = doEditTracked
 dotfilesEvent _ (EvKey (KChar 'd') [])          = doDiff
 dotfilesEvent FTracked (EvKey (KChar 'l') [])   = doFocusRight
 dotfilesEvent FTracked (EvKey (KChar 'R') [])   = doRemoveFile
 dotfilesEvent FTracked (EvKey (KChar 'A') [])   = doAddFile
-dotfilesEvent _ (EvKey (KChar 'f') []) = doEditFilter
-dotfilesEvent _ (EvKey (KChar 'F') []) = doClearFilter
+dotfilesEvent _ (EvKey (KChar 'f') [])          = doEditFilter
+dotfilesEvent _ (EvKey (KChar 'F') [])          = doClearFilter
 dotfilesEvent FTracked ev                       = trackedListEvent ev
 dotfilesEvent FUntracked (EvKey (KChar 'e') []) = doEditUntracked
 dotfilesEvent FUntracked (EvKey (KChar 'h') []) = doFocusLeft
@@ -94,21 +94,21 @@ doFocusRight = do
 doAddFile :: DEvent ()
 doAddFile = get >>= byFile . trackedSel
  where
-  byFile (Just (Unstaged fp True)) = liftIO (stageFile fp) >> syncDotfiles
-  byFile _                         = return ()
+  byFile (Just (Unstaged fp _)) = liftIO (CMD.stageFile fp) >> syncDotfiles
+  byFile _                      = return ()
 
 doRemoveFile :: DEvent ()
 doRemoveFile = get >>= byFile . trackedSel
  where
-  byFile (Just (Tracked fp))    = liftIO (untrackFile fp) >> syncDotfiles
-  byFile (Just (Staged fp _))   = liftIO (unstageFile fp) >> syncDotfiles
-  byFile (Just (Unstaged fp _)) = liftIO (untrackFile fp) >> syncTracked
+  byFile (Just (Tracked fp))    = liftIO (CMD.untrackFile fp) >> syncDotfiles
+  byFile (Just (Staged fp _))   = liftIO (CMD.unstageFile fp) >> syncDotfiles
+  byFile (Just (Unstaged fp _)) = liftIO (CMD.untrackFile fp) >> syncTracked
   byFile _                      = return ()
 
 doTrackFile :: DEvent ()
 doTrackFile = get >>= byFile . untrackedSel
  where
-  byFile (Just fp) = liftIO (stageFile fp) >> syncDotfiles
+  byFile (Just fp) = liftIO (CMD.stageFile fp) >> syncDotfiles
   byFile _         = return ()
 
 doIgnoreFile :: DEvent ()
@@ -116,6 +116,10 @@ doIgnoreFile = get >>= setIgnoreFile . untrackedSel
 
 doEditFilter :: DEvent ()
 doEditFilter = filterL .= True
+
+-- FIXME only show if we have staged contents!
+doCommit :: DEvent ()
+doCommit = commitL .= True
 
 doClearFilter :: DEvent ()
 doClearFilter = do

@@ -15,7 +15,7 @@ import qualified Brick.Widgets.List   as L
 
 import           Brick.Widgets.Center (hCenter)
 import           Brick.Widgets.Core   (Padding (Pad), hBox, padRight)
-import           Brick.Widgets.Edit   (renderEditor)
+import           Brick.Widgets.Edit   (getEditContents, renderEditor)
 import qualified Brick.Widgets.Table  as T
 import qualified Data.Vector          as V
 import           Data.Version         (showVersion)
@@ -79,20 +79,29 @@ ui st = maybe [drawUi] (\p -> [renderPopup p, drawUi]) (_popup st)
     BundleTab  -> bundleTab st
 
 dotfileTab :: State -> Widget RName
-dotfileTab s = drawUi (_ignore s) (_filter s)
+dotfileTab s = drawUi (_ignore s) (_filter s) (_commit s)
  where
-  drawUi False False = tabComp <=> (trackedComp <+> untrackedComp) <=> dotfHelp
-  drawUi True _      = tabComp <=> (trackedComp <+> untrackedComp) <=> ignoreComp s <=> dotfHelp
-  drawUi _ True      = tabComp <=> (trackedComp <+> untrackedComp) <=> filterComp s <=> dotfHelp
+  drawUi True _ _    = tabComp <=> (trackedComp <+> untrackedComp) <=> ignoreComp s <=> dotfHelp
+  drawUi _ True _    = tabComp <=> (trackedComp <+> untrackedComp) <=> filterComp s <=> dotfHelp
+  drawUi _ _ True    = tabComp <=> (trackedComp <+> untrackedComp) <=> commitComp s <=> dotfHelp
+  drawUi _ _ _ = tabComp <=> (trackedComp <+> untrackedComp) <=> dotfHelp
   tabComp = tabLine DotfileTab ver
   tcount = countTracked s
   ucount = countUntracked s
-  trackedTitle = title (" Tracked " ++ show tcount ++ " ") $ hasFocus FTracked s
-  untrackedTitle = title (" Untracked " ++ show ucount ++ " ") $ hasFocus FUntracked s
+  trackedTitle = title (filterTitle s ++ " Tracked " ++ show tcount ++ " ") $ hasFocus FTracked s
+  untrackedTitle = title (filterTitle s ++ " Untracked " ++ show ucount ++ " ") $ hasFocus FUntracked s
   mkTracked = trackedList (_tracked s) $ hasFocus FTracked s
   mkUntracked = untrackedList (_untracked s) $ hasFocus FUntracked s
   trackedComp = borderWithLabel trackedTitle mkTracked
   untrackedComp = borderWithLabel untrackedTitle mkUntracked
+
+filterTitle :: State -> String
+filterTitle state =
+  let editor = _filterEdit state
+      content = getEditContents editor
+  in case head content of
+    "" -> ""
+    _  -> "[Filter] "
 
 trackedList :: L.List RName TrackedType -> Bool -> Widget RName
 trackedList l focus = L.renderList (toWidget focus) focus l
@@ -107,6 +116,10 @@ ignoreComp state = border $ withAttr attrTitle $ str "Ignore: " <+> (hLimitPerce
 filterComp :: State -> Widget RName
 filterComp state = border $ withAttr attrTitle $ str "Filter (regex): " <+> (hLimitPercent 100 . vLimit 1 $ editor)
   where editor = renderEditor (str . unlines) (state ^. filterL) (state ^. filterEditL)
+
+commitComp :: State -> Widget RName
+commitComp state = border $ withAttr attrTitle $ str "Commit Msg: " <+> (hLimitPercent 100 . vLimit 1 $ editor)
+  where editor = renderEditor (str . unlines) (state ^. commitL) (state ^. commitEditL)
 
 dotfHelp :: Widget RName
 dotfHelp = border . hCenter $

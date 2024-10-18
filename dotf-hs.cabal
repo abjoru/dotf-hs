@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.36.0.
+-- This file has been generated from package.yaml by hpack version 0.37.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -34,6 +34,7 @@ library
       Dotf.Utils
       Tui
       Tui.Event.Bundles
+      Tui.Event.Commit
       Tui.Event.Dotfiles
       Tui.Event.Filter
       Tui.Event.Ignore
@@ -55,10 +56,13 @@ library
       QuasiQuotes
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
-      aeson
+      ConfigFile
+    , MissingH
+    , aeson
     , base >=4.7 && <5
     , brick
     , bytestring
+    , containers
     , directory
     , extra
     , filepath
@@ -94,10 +98,13 @@ executable dotf
       QuasiQuotes
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N -optP-Wno-nonportable-include-path
   build-depends:
-      aeson
+      ConfigFile
+    , MissingH
+    , aeson
     , base >=4.7 && <5
     , brick
     , bytestring
+    , containers
     , directory
     , dotf-hs
     , extra
@@ -135,10 +142,13 @@ test-suite dotf-hs-test
       QuasiQuotes
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
+      ConfigFile
+    , MissingH
+    , aeson
     , base >=4.7 && <5
     , brick
     , bytestring
+    , containers
     , directory
     , dotf-hs
     , extra

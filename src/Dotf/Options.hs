@@ -10,8 +10,7 @@ import           Data.String.Interpolate (__i)
 import           Options.Applicative     (Parser, argument, command, execParser,
                                           flag, fullDesc, help, helper,
                                           hsubparser, info, long, metavar,
-                                          progDesc, short, str, strOption,
-                                          (<**>))
+                                          progDesc, short, str, (<**>))
 
 -----------
 -- Types --
@@ -61,20 +60,10 @@ parseCommand = hsubparser
   )
 
 parseInit :: Parser Command
-parseInit = Init <$> strOption
-  (  long "url"
-  <> short 'u'
-  <> metavar "GIT_URL"
-  <> help "Upstream GIT bare repository URL"
-  )
+parseInit = Init <$> argument str (metavar "GIT_URL")
 
 parseCommit :: Parser Command
-parseCommit = Commit <$> strOption
-  (  long "message"
-  <> short 'm'
-  <> metavar "COMMIT_MSG"
-  <> help "Message for commit"
-  )
+parseCommit = Commit <$> argument str (metavar "COMMIT_MSG")
 
 parseGit :: Parser Command
 parseGit = Git <$> argument str (metavar "GIT_OPTS")

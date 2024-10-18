@@ -13,12 +13,14 @@ module Dotf.Commands (
   untrackFile,
   diffFile,
   commit,
+  commit',
   clone,
   newBareRepo,
   push,
   pull,
   status,
-  diffState
+  diffState,
+  gitRaw
 ) where
 
 import           Control.Monad        (forM_, void, (>=>))
@@ -29,23 +31,16 @@ import           Dotf.Bundles         (Cloneable (toCloneProcess),
                                        collectGitPackages, collectPackages,
                                        collectPostScripts, collectPreScripts,
                                        loadBundles)
-import           Dotf.Git             (gitCheckoutBare, gitCloneBareUrl,
-                                       gitCommit, gitDiffFile, gitDiffStatus,
-                                       gitIgnoreFile, gitNewBareRepo, gitPull,
-                                       gitPush, gitStageFile, gitStatus,
-                                       gitTracked, gitTrackedStaged,
-                                       gitTrackedUnstaged, gitUnstageFile,
-                                       gitUntrackFile, gitUntracked, mapEitherM,
-                                       processFileListResult,
-                                       processStringResult)
+import           Dotf.Git
 import           Dotf.Types           (Distro (Arch, Osx, Unsupported), Dry,
                                        ErrorOrFilePaths, ErrorOrString,
                                        ErrorOrTracked, GitPackage, Package,
                                        TrackedType (..))
-import           Dotf.Utils           (appendToFile, distro, resolveScript,
-                                       which)
+import           Dotf.Utils           (appendToFile, distro, gitIgnoreFile,
+                                       resolveScript, which)
 import           System.Directory     (createDirectoryIfMissing,
-                                       doesDirectoryExist, getHomeDirectory)
+                                       doesDirectoryExist, doesFileExist,
+                                       getHomeDirectory)
 import           System.FilePath      ((</>))
 import qualified System.Process.Typed as PT
 import           System.Process.Typed (ExitCode)
@@ -111,39 +106,63 @@ ignoreFile :: FilePath -> IO ()
 ignoreFile fp = getHomeDirectory >>= (appendToFile fp . gitIgnoreFile)
 
 stageFile :: FilePath -> IO ExitCode
-stageFile = gitStageFile
+stageFile fp = gitBare ["add", fp] >>= PT.runProcess
 
 unstageFile :: FilePath -> IO ExitCode
-unstageFile = gitUnstageFile
+unstageFile fp = gitBareSilent ["reset", "--", fp] >>= PT.runProcess
 
 untrackFile :: FilePath -> IO ExitCode
-untrackFile = gitUntrackFile
+untrackFile fp = do
+  home <- getHomeDirectory
+  exists <- doesFileExist $ home </> fp
+  if exists
+    then gitBare ["rm", "--cached", fp] >>= PT.runProcess
+    else gitBareSilent ["rm", fp] >>= PT.runProcess
 
 diffFile :: FilePath -> IO ErrorOrString
-diffFile fp = processStringResult <$> gitDiffFile fp
+diffFile fp = do
+  res <- gitBare ["diff", fp] >>= PT.readProcess
+  return $ processStringResult res
 
 commit :: Dry -> String -> IO ()
-commit = gitCommit
+commit True msg  = gitBare ["commit", "-m", msg] >>= print
+commit False msg = gitBare ["commit", "-m", msg] >>= (void . PT.runProcess)
+
+commit' :: String -> IO ()
+commit' msg = gitBareSilent ["commit", "-m", msg] >>= (void . PT.runProcess)
 
 clone :: Dry -> String -> IO ()
-clone d url = gitCloneBareUrl d url >> gitCheckoutBare d
+clone d url = do
+  home <- getHomeDirectory
+  cfg1 <- gitBare ["clone", "--bare", url, home </> ".dotf"]
+  cfg2 <- gitBare ["checkout"]
+  runCmd d cfg1 cfg2
+  where runCmd True a b  = print a >> print b
+        runCmd False a b = void $ PT.runProcess a >> PT.runProcess b
 
 newBareRepo :: Dry -> IO ()
-newBareRepo d = do
-  home <- getHomeDirectory
-  gitNewBareRepo d (home </> ".dotf")
+newBareRepo dry = getHomeDirectory >>= mkCmd >>= if dry then print else void . PT.runProcess
+  where mkCmd h = gitBare ["init", "--bare", h </> ".dotf"]
 
 push :: Dry -> IO ()
-push = gitPush
+push False = gitBare ["push"] >>= (void . PT.runProcess)
+push True  = gitBare ["push"] >>= print
 
 pull :: Dry -> IO ()
-pull = gitPull
+pull False = gitBare ["pull"] >>= (void . PT.runProcess)
+pull True  = gitBare ["pull"] >>= print
 
 status :: Dry -> IO ()
-status = gitStatus
+status False = gitBare ["status", "-sb"] >>= (void . PT.runProcess)
+status True  = gitBare ["status", "-sb"] >>= print
 
 diffState :: Dry -> IO ()
-diffState = gitDiffStatus
+diffState False = gitBare ["diff"] >>= (void . PT.runProcess)
+diffState True  = gitBare ["diff"] >>= print
+
+gitRaw :: Dry -> String -> IO ()
+gitRaw False cmd = gitBare (words cmd) >>= (void . PT.runProcess)
+gitRaw True cmd  = gitBare (words cmd) >>= print
 
 -----------
 -- Utils --

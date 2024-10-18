@@ -30,6 +30,8 @@ module Tui.State (
   newBundleL,
   filterEditL,
   filterL,
+  commitEditL,
+  commitL,
   errorL,
   tabL,
   showAllTrackedL,
@@ -42,22 +44,23 @@ module Tui.State (
   maybeDiffFile
 ) where
 
-import Text.Regex.PCRE 
-import Data.Text.Zipper (getText)
-import           Brick               (get, suspendAndResume)
+import           Brick               (get, modify, suspendAndResume)
 import           Brick.Types         (EventM)
-import           Brick.Widgets.Edit  (Editor, editor, editContentsL)
-import           Brick.Widgets.List  (listElementsL)
+import           Brick.Widgets.Edit  (Editor, editContentsL, editor)
+import           Brick.Widgets.List  (GenericList (listSelected), listElementsL,
+                                      listMoveTo)
 import qualified Brick.Widgets.List  as L
 import           Control.Monad.State (MonadIO (liftIO))
 import           Data.Maybe          (fromMaybe)
+import           Data.Text.Zipper    (getText)
 import qualified Data.Vector         as V
 import           Dotf.Bundles
-import           Dotf.Commands
+import qualified Dotf.Commands       as CMD
 import           Dotf.Types
 import           Dotf.Utils
-import           Lens.Micro          (Lens', lens, (^.))
+import           Lens.Micro          (Lens', lens, (%~), (^.))
 import           Lens.Micro.Mtl      (use, (.=))
+import           Text.Regex.PCRE
 import           Tui.Popup           (Popup)
 
 -----------
@@ -76,6 +79,7 @@ data RName
   | RIgnoreEditor
   | RNewBundleEditor
   | RFilterEditor
+  | RCommitEditor
   deriving (Eq, Ord, Show)
 
 data Focus
@@ -120,6 +124,8 @@ data State = State
   , _newBundle      :: Bool
   , _filterEdit     :: Editor String RName
   , _filter         :: Bool
+  , _commitEdit     :: Editor String RName
+  , _commit         :: Bool
   , _error          :: Maybe GitError
   , _popup          :: Maybe (Popup DialogChoice RName)
   , _tab            :: Tab
@@ -146,6 +152,8 @@ emptyState =
     , _newBundle = False
     , _filterEdit = editor RFilterEditor Nothing ""
     , _filter = False
+    , _commitEdit = editor RCommitEditor Nothing ""
+    , _commit = False
     , _error = Nothing
     , _popup = Nothing
     , _tab = DotfileTab
@@ -250,6 +258,12 @@ filterEditL = lens _filterEdit (\s b -> s{_filterEdit = b})
 filterL :: Lens' State Bool
 filterL = lens _filter (\s b -> s{_filter = b})
 
+commitEditL :: Lens' State (Editor String RName)
+commitEditL = lens _commitEdit (\s e -> s { _commitEdit = e })
+
+commitL :: Lens' State Bool
+commitL = lens _commit (\s b -> s { _commit = b })
+
 errorL :: Lens' State (Maybe GitError)
 errorL = lens _error (\s me -> s{_error = me})
 
@@ -289,21 +303,31 @@ syncDotfiles = syncTracked >> syncUntracked
 syncTracked :: DEvent ()
 syncTracked = do
   s        <- use showAllTrackedL
+  lst      <- use trackedL
   filterEd <- use filterEditL
-  files    <- liftIO $ unsafeListTracked s
+  files    <- liftIO $ CMD.unsafeListTracked s
+
+  let idx = fromMaybe 0 $ listSelected lst
 
   case head $ getText $ filterEd ^. editContentsL of
     "" -> trackedL .= L.list RTrackedList (mkTrackedList Nothing files) 1
     v  -> trackedL .= L.list RTrackedList (mkTrackedList (Just v) files) 1
 
+  modify (trackedL %~ listMoveTo idx)
+
 syncUntracked :: DEvent ()
 syncUntracked = do
+  lst      <- use untrackedL
   filterEd <- use filterEditL
-  files    <- liftIO unsafeListUntracked
+  files    <- liftIO CMD.unsafeListUntracked
+
+  let idx = fromMaybe 0 $ listSelected lst
 
   case head $ getText $ filterEd ^. editContentsL of
     "" -> untrackedL .= L.list RUntrackedList (mkFileList Nothing files) 1
     v  -> untrackedL .= L.list RUntrackedList (mkFileList (Just v) files) 1
+
+  modify (untrackedL %~ listMoveTo idx)
 
 maybeEditFile :: Maybe FilePath -> DEvent ()
 maybeEditFile Nothing = return ()
@@ -321,5 +345,5 @@ mkFileList Nothing raw  = V.fromList raw
 mkFileList (Just f) raw = V.fromList $ filter (=~ f) raw
 
 mkTrackedList :: Maybe String -> [TrackedType] -> V.Vector TrackedType
-mkTrackedList Nothing raw = V.fromList raw
+mkTrackedList Nothing raw  = V.fromList raw
 mkTrackedList (Just f) raw = V.fromList $ filter (\v -> show v =~ f) raw

@@ -43,6 +43,9 @@ dependencies:
 - text-zipper
 - optparse-applicative
 - regex-pcre
+- ConfigFile
+- MissingH
+- containers
 
 default-extensions:
 - OverloadedStrings
