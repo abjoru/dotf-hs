@@ -41,6 +41,8 @@ bundleFileTemplate name =
   \#git-packages:
     \# Each package starts with a name
     \#- name: my-git-package
+      \# Ignore OS
+      \#ignore: ["osx", "deb"]
       \# Each package needs a URL
       \#url: "https://github.com/my/git/package"
       \# [Optional] A package may define a target branch

@@ -182,8 +182,9 @@ mkPkgRows bs = map mkRow $ collectNamedPackages bs
          PkgRow n (fromMaybe "" a) (fromMaybe "" b) (fromMaybe "" c)
 
 -- | Create TUI table rows for GIT packages in provided bundles.
+-- FIXME show ignore list for GIT packages in TUI
 mkGitRows :: [Bundle] -> [GitRow]
-mkGitRows bs = map mkRow $ collectGitPackages bs
+mkGitRows bs = map mkRow $ collectGitPackages Unsupported bs
  where mkRow g = GitRow (gitName g) (gitUrl g) (fromMaybe "" $ gitBranch g)
 
 -- | Tests if the given focus object is in fact in focus.

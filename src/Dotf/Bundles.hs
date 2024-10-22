@@ -18,7 +18,7 @@ import           Data.String.Interpolate (i)
 import qualified Data.Yaml               as Y
 import           Dotf.Templates          (bundleFileTemplate)
 import           Dotf.Types              (Bundle (..), Distro (Arch, Deb, Osx),
-                                          GitPackage (GitPackage, gitName),
+                                          GitPackage (GitPackage, gitName, gitSkip),
                                           NamedPackage (..), Package (Package))
 import           Dotf.Utils              (distro, getGitInstallPath,
                                           listBundleFiles,
@@ -69,15 +69,15 @@ instance Cloneable GitPackage where
     if upd
       then return $ setWorkingDir dir $ proc "git" (args dir upd pkg)
       else return $ proc "git" (args dir upd pkg)
-    where args _ True (GitPackage _ _ _ True _)      = ["pull", "--recurse-submodules"]
-          args _ True _                              = ["pull"]
-          args d _ (GitPackage _ u Nothing False _)  = ["clone", u, d]
-          args d _ (GitPackage _ u Nothing True _)   = ["clone", "--recurse-submodules", u, d]
-          args d _ (GitPackage _ u (Just b) False _) = ["clone", "-b", b, u, d]
-          args d _ (GitPackage _ u (Just b) True _)  = ["clone", "--recurse-submodules", "-b", b, u, d]
+    where args _ True (GitPackage _ _ _ _ True _)      = ["pull", "--recurse-submodules"]
+          args _ True _                                = ["pull"]
+          args d _ (GitPackage _ _ u Nothing False _)  = ["clone", u, d]
+          args d _ (GitPackage _ _ u Nothing True _)   = ["clone", "--recurse-submodules", u, d]
+          args d _ (GitPackage _ _ u (Just b) False _) = ["clone", "-b", b, u, d]
+          args d _ (GitPackage _ _ u (Just b) True _)  = ["clone", "--recurse-submodules", "-b", b, u, d]
 
 instance Installable GitPackage where
-  toInstallProcess _ pkg@(GitPackage _ _ _ _ (Just cmd)) = do
+  toInstallProcess _ pkg@(GitPackage _ _ _ _ _ (Just cmd)) = do
     cfg <- readOverrides
     dir <- getGitInstallPath cfg pkg
     return $ setWorkingDir dir $ proc "bash" ["-c", cmd]
@@ -120,8 +120,13 @@ collectNamedPackages :: [Bundle] -> [NamedPackage]
 collectNamedPackages = foldr (\b acc -> bundleOsPackages b ++ acc) []
 
 -- | Collect all `GitPackage`s from all `Bundle`s.
-collectGitPackages :: [Bundle] -> [GitPackage]
-collectGitPackages = foldr (\b acc -> bundleGitPackages b ++ acc) []
+collectGitPackages :: Distro -> [Bundle] -> [GitPackage]
+collectGitPackages d = foldr (\b acc -> collect d b ++ acc) []
+  where collect dist bndl = filter (not . ignore dist) $ bundleGitPackages bndl
+        ignore Arch pkg = "arch" `elem` gitSkip pkg
+        ignore Osx pkg  = "osx" `elem` gitSkip pkg
+        ignore Deb pkg  = "deb" `elem` gitSkip pkg
+        ignore _ _      = False
 
 -- | Collect all scripts from all `Bundle`s.
 collectScripts :: [Bundle] -> [FilePath]

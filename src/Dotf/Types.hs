@@ -41,6 +41,7 @@ data NamedPackage = NamedPackage String Package
 
 data GitPackage = GitPackage {
   gitName       :: String,
+  gitSkip       :: [String],
   gitUrl        :: String,
   gitBranch     :: Maybe String,
   gitSubmodules :: Bool,
@@ -120,6 +121,7 @@ instance FromJSON NamedPackage where
 instance FromJSON GitPackage where
   parseJSON (Y.Object o) =
     GitPackage <$> o .: "name"
+               <*> o .:? "ignore" .!= []
                <*> o .: "url"
                <*> o .:? "branch"
                <*> o .:? "submodules" .!= False

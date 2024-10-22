@@ -78,7 +78,7 @@ installBundles dry h = do
   bundles <- loadBundles
   let filtered = filter (matchHeadless h . bundleHeadless) bundles
       pkgs     = collectPackages filtered
-      gits     = collectGitPackages filtered
+      gits     = collectGitPackages dist filtered
       pre      = collectPreScripts filtered
       post     = collectPostScripts filtered
       preIO    = installPre dry pre
