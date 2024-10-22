@@ -9,9 +9,9 @@ import qualified Dotf.Commands as CMD
 import           Dotf.Types    (GitError, TrackedType)
 import           Lens.Micro    ((^.))
 import           Tui.Events    (handleEvents)
-import           Tui.State     (Focus (FIgnoreEditor, FNewBundleEditor),
-                                RName (RIgnoreEditor, RNewBundleEditor), State,
-                                focusL, withState)
+import           Tui.State     (Focus (FCommitEditor, FFilterEditor, FIgnoreEditor, FNewBundleEditor),
+                                RName (RCommitEditor, RFilterEditor, RIgnoreEditor, RNewBundleEditor),
+                                State, focusL, withState)
 import           Tui.Theme     (theme)
 import           Tui.Widgets   (ui)
 
@@ -29,6 +29,8 @@ appCursor :: State -> [CursorLocation RName] -> Maybe (CursorLocation RName)
 appCursor state r = case state ^. focusL of
   FIgnoreEditor    -> showCursorNamed RIgnoreEditor r
   FNewBundleEditor -> showCursorNamed RNewBundleEditor r
+  FFilterEditor    -> showCursorNamed RFilterEditor r
+  FCommitEditor    -> showCursorNamed RCommitEditor r
   _                -> Nothing
 
 loadTracked :: IO [TrackedType]

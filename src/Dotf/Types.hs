@@ -8,6 +8,7 @@ module Dotf.Types (
   GitError(..),
 
   Dry,
+  Headless,
   ErrorOrString,
   ErrorOrFilePaths,
   ErrorOrTracked,
@@ -67,6 +68,8 @@ data GitError = GitError {
 } deriving (Eq)
 
 type Dry = Bool
+
+type Headless = Bool
 
 type ErrorOrString = Either GitError String
 

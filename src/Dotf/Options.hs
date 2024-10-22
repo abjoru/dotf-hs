@@ -1,12 +1,12 @@
 module Dotf.Options (
-  DryMode(..),
   Command(..),
   Options(..),
 
-  runOpts
+  readOpts
 ) where
 
 import           Data.String.Interpolate (__i)
+import           Dotf.Types              (Dry, Headless)
 import           Options.Applicative     (Parser, argument, command, execParser,
                                           flag, fullDesc, help, helper,
                                           hsubparser, info, long, metavar,
@@ -15,8 +15,6 @@ import           Options.Applicative     (Parser, argument, command, execParser,
 -----------
 -- Types --
 -----------
-
-data DryMode = Normal | Dry deriving Show
 
 data Command
   = Install
@@ -31,19 +29,26 @@ data Command
   deriving Show
 
 data Options = Options {
-  dry :: DryMode,
-  cmd :: Command
+  dry      :: Dry,
+  headless :: Headless,
+  cmd      :: Command
 } deriving Show
 
 -------------
 -- Parsers --
 -------------
 
-parseDryMode :: Parser DryMode
-parseDryMode = flag Normal Dry
+parseDryMode :: Parser Dry
+parseDryMode = flag False True
   (  long "dryrun"
   <> short 'd'
   <> help "Enable dry mode"
+  )
+
+parseHeadless :: Parser Headless
+parseHeadless = flag False True
+  (  long "headless"
+  <> help "Install headless system"
   )
 
 parseCommand :: Parser Command
@@ -69,14 +74,15 @@ parseGit :: Parser Command
 parseGit = Git <$> argument str (metavar "GIT_OPTS")
 
 parseOptions :: Parser Options
-parseOptions = Options <$> parseDryMode <*> parseCommand
+parseOptions = Options <$> parseDryMode <*> parseHeadless <*> parseCommand
 
 -------------
 -- Methods --
 -------------
 
-runOpts :: IO Options
-runOpts = execParser $ info (parseOptions <**> helper)
+-- | Executes the `Options` parser on the program args.
+readOpts :: IO Options
+readOpts = execParser $ info (parseOptions <**> helper)
   (fullDesc <> progDesc [__i|DotF :: The simple dot-file manager.
 
                              This little application allows for setting up standard applications that

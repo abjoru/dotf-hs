@@ -91,6 +91,8 @@ data Focus
   | FScriptList
   | FIgnoreEditor
   | FNewBundleEditor
+  | FFilterEditor
+  | FCommitEditor
   deriving (Eq, Ord, Show)
 
 data Tab
@@ -102,112 +104,124 @@ instance Show Tab where
   show DotfileTab = "Dotfiles [1]"
   show BundleTab  = "Bundles [2]"
 
+-- | Defines a table row for OS packages.
 -- name, arch, osx, deb
 data PkgRow = PkgRow String String String String
 
+-- | Defines a table row for GIT packages.
 -- name, url, branch
 data GitRow = GitRow String String String
 
 data DialogChoice = Ok
 
-data State = State
-  { _focus          :: Focus
-  , _tracked        :: L.List RName TrackedType
-  , _untracked      :: L.List RName FilePath
-  , _bundles        :: L.List RName Bundle
-  , _packages       :: L.List RName PkgRow
-  , _gitPackages    :: L.List RName GitRow
-  , _scripts        :: L.List RName FilePath
-  , _ignoreEdit     :: Editor String RName
-  , _ignore         :: Bool
-  , _newBundleEdit  :: Editor String RName
-  , _newBundle      :: Bool
-  , _filterEdit     :: Editor String RName
-  , _filter         :: Bool
-  , _commitEdit     :: Editor String RName
-  , _commit         :: Bool
-  , _error          :: Maybe GitError
-  , _popup          :: Maybe (Popup DialogChoice RName)
-  , _tab            :: Tab
-  , _showAllTracked :: Bool
-  }
+data State = State {
+  _focus          :: Focus,
+  _tracked        :: L.List RName TrackedType,
+  _untracked      :: L.List RName FilePath,
+  _bundles        :: L.List RName Bundle,
+  _packages       :: L.List RName PkgRow,
+  _gitPackages    :: L.List RName GitRow,
+  _scripts        :: L.List RName FilePath,
+  _ignoreEdit     :: Editor String RName,
+  _ignore         :: Bool,
+  _newBundleEdit  :: Editor String RName,
+  _newBundle      :: Bool,
+  _filterEdit     :: Editor String RName,
+  _filter         :: Bool,
+  _commitEdit     :: Editor String RName,
+  _commit         :: Bool,
+  _error          :: Maybe GitError,
+  _popup          :: Maybe (Popup DialogChoice RName),
+  _tab            :: Tab,
+  _showAllTracked :: Bool
+}
 
 -------------
 -- Methods --
 -------------
 
+-- | Create a new 'empty' state instance.
 emptyState :: State
-emptyState =
-  State
-    { _focus = FTracked
-    , _tracked = L.list RTrackedList V.empty 1
-    , _untracked = L.list RUntrackedList V.empty 1
-    , _bundles = L.list RBundleList V.empty 1
-    , _packages = L.list RPackageList V.empty 1
-    , _gitPackages = L.list RGitPackageList V.empty 1
-    , _scripts = L.list RScriptList V.empty 1
-    , _ignoreEdit = editor RIgnoreEditor Nothing ""
-    , _ignore = False
-    , _newBundleEdit = editor RNewBundleEditor Nothing ""
-    , _newBundle = False
-    , _filterEdit = editor RFilterEditor Nothing ""
-    , _filter = False
-    , _commitEdit = editor RCommitEditor Nothing ""
-    , _commit = False
-    , _error = Nothing
-    , _popup = Nothing
-    , _tab = DotfileTab
-    , _showAllTracked = False
-    }
+emptyState = State {
+  _focus          = FTracked,
+  _tracked        = L.list RTrackedList V.empty 1,
+  _untracked      = L.list RUntrackedList V.empty 1,
+  _bundles        = L.list RBundleList V.empty 1,
+  _packages       = L.list RPackageList V.empty 1,
+  _gitPackages    = L.list RGitPackageList V.empty 1,
+  _scripts        = L.list RScriptList V.empty 1,
+  _ignoreEdit     = editor RIgnoreEditor Nothing "",
+  _ignore         = False,
+  _newBundleEdit  = editor RNewBundleEditor Nothing "",
+  _newBundle      = False,
+  _filterEdit     = editor RFilterEditor Nothing "",
+  _filter         = False,
+  _commitEdit     = editor RCommitEditor Nothing "",
+  _commit         = False,
+  _error          = Nothing,
+  _popup          = Nothing,
+  _tab            = DotfileTab,
+  _showAllTracked = False
+}
 
+-- | Simple `State` constructor.
 withState :: [TrackedType] -> [FilePath] -> [Bundle] -> State
-withState ts us bs =
-  emptyState
-    { _tracked = L.list RTrackedList (V.fromList ts) 1
-    , _untracked = L.list RUntrackedList (V.fromList us) 1
-    , _bundles = L.list RBundleList (V.fromList bs) 1
-    , _packages = L.list RPackageList (V.fromList $ mkPkgRows bs) 1
-    , _gitPackages = L.list RGitPackageList (V.fromList $ mkGitRows bs) 1
-    , _scripts = L.list RScriptList (V.fromList $ collectScripts bs) 1
-    }
+withState ts us bs = emptyState {
+  _tracked = L.list RTrackedList (V.fromList ts) 1,
+  _untracked = L.list RUntrackedList (V.fromList us) 1,
+  _bundles = L.list RBundleList (V.fromList bs) 1,
+  _packages = L.list RPackageList (V.fromList $ mkPkgRows bs) 1,
+  _gitPackages = L.list RGitPackageList (V.fromList $ mkGitRows bs) 1,
+  _scripts = L.list RScriptList (V.fromList $ collectScripts bs) 1
+}
 
+-- | Create TUI table rows for packages in provided bundles.
 mkPkgRows :: [Bundle] -> [PkgRow]
 mkPkgRows bs = map mkRow $ collectNamedPackages bs
  where mkRow (NamedPackage n (Package a b c)) =
          PkgRow n (fromMaybe "" a) (fromMaybe "" b) (fromMaybe "" c)
 
+-- | Create TUI table rows for GIT packages in provided bundles.
 mkGitRows :: [Bundle] -> [GitRow]
 mkGitRows bs = map mkRow $ collectGitPackages bs
  where mkRow g = GitRow (gitName g) (gitUrl g) (fromMaybe "" $ gitBranch g)
 
+-- | Tests if the given focus object is in fact in focus.
 hasFocus :: Focus -> State -> Bool
 hasFocus expected st = expected == _focus st
 
+-- | Counts all tracked (visible) files.
 countTracked :: State -> Int
 countTracked s = V.length $ L.listElements $ _tracked s
 
+-- | Counts all untracked (visible) files.
 countUntracked :: State -> Int
 countUntracked s = V.length $ L.listElements $ _untracked s
 
+-- | Get the selected `Bundle` if any.
 bundleSel :: State -> Maybe Bundle
 bundleSel state =
   let l = state ^. bundlesL
    in snd <$> L.listSelectedElement l
 
+-- | Get the selected bundle file if any.
 bundleSelFile :: State -> Maybe String
 bundleSelFile state =
   let bundle = bundleSel state
       name = fmap bundleName bundle
    in fmap (++ ".yaml") name
 
+-- | Get the selected tracked file if any.
 trackedSel :: State -> Maybe TrackedType
 trackedSel state =
   let l = state ^. trackedL
    in snd <$> L.listSelectedElement l
 
+-- | Get the selected tracked file path if any.
 trackedSelFilePath :: State -> Maybe FilePath
 trackedSelFilePath s = toPath <$> trackedSel s
 
+-- | Get the selected untracked file path if any.
 untrackedSel :: State -> Maybe FilePath
 untrackedSel s =
   let l = s ^. untrackedL
@@ -271,12 +285,15 @@ tabL :: Lens' State Tab
 tabL = lens _tab (\s t -> s{_tab = t})
 
 showAllTrackedL :: Lens' State Bool
-showAllTrackedL = lens _showAllTracked (\s t -> s{_showAllTracked = t})
+showAllTrackedL = lens _showAllTracked (\s t -> s {_showAllTracked = t})
 
 -------------
 -- Actions --
 -------------
 
+-- | Sync all application bundles.
+-- This will reload all bundles from filesystem and recreate
+-- the application state.
 syncBundles :: DEvent ()
 syncBundles = do
   bundles      <- liftIO loadBundles
@@ -285,6 +302,7 @@ syncBundles = do
   gitPackagesL .= L.list RGitPackageList (V.fromList $ mkGitRows bundles) 1
   scriptsL     .= L.list RScriptList (V.fromList $ collectScripts bundles) 1
 
+-- | Select (or deselect) application bundle.
 selectBundle :: Maybe Bundle -> DEvent ()
 selectBundle (Just b) = do
   packagesL    .= L.list RPackageList (V.fromList $ mkPkgRows [b]) 1
@@ -297,9 +315,11 @@ selectBundle Nothing = do
   gitPackagesL   .= L.list RGitPackageList (V.fromList $ mkGitRows allBundles) 1
   scriptsL       .= L.list RScriptList (V.fromList $ collectScripts allBundles) 1
 
+-- | Sync all dot-files, both tracked and untracked.
 syncDotfiles :: DEvent ()
 syncDotfiles = syncTracked >> syncUntracked
 
+-- | Sync all tracked dot-files.
 syncTracked :: DEvent ()
 syncTracked = do
   s        <- use showAllTrackedL
@@ -315,6 +335,7 @@ syncTracked = do
 
   modify (trackedL %~ listMoveTo idx)
 
+-- | Sync all untracked dot-files.
 syncUntracked :: DEvent ()
 syncUntracked = do
   lst      <- use untrackedL
@@ -329,21 +350,25 @@ syncUntracked = do
 
   modify (untrackedL %~ listMoveTo idx)
 
+-- | Edit a given filepath if any.
 maybeEditFile :: Maybe FilePath -> DEvent ()
 maybeEditFile Nothing = return ()
 maybeEditFile (Just fp) = do
   state <- get
   suspendAndResume $ editFile fp >> pure state
 
+-- | Show diff for a single file or entire index.
 maybeDiffFile :: Maybe FilePath -> DEvent ()
 maybeDiffFile maybeFile = do
   state <- get
-  suspendAndResume $ maybeDiff maybeFile >> pure state
+  suspendAndResume $ runDiff maybeFile >> pure state
 
+-- | Maybe filter the given list of filepaths.
 mkFileList :: Maybe String -> [FilePath] -> V.Vector FilePath
 mkFileList Nothing raw  = V.fromList raw
 mkFileList (Just f) raw = V.fromList $ filter (=~ f) raw
 
+-- | Maybe filter the given list of tracked files.
 mkTrackedList :: Maybe String -> [TrackedType] -> V.Vector TrackedType
 mkTrackedList Nothing raw  = V.fromList raw
 mkTrackedList (Just f) raw = V.fromList $ filter (\v -> show v =~ f) raw

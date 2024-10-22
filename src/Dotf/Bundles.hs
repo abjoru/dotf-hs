@@ -17,14 +17,13 @@ module Dotf.Bundles (
 import           Data.String.Interpolate (i)
 import qualified Data.Yaml               as Y
 import           Dotf.Templates          (bundleFileTemplate)
-import           Dotf.Types              (Bundle (bundleGitPackages, bundleOsPackages, bundlePostInstallScript, bundlePreInstallScript),
-                                          Distro (Arch, Deb, Osx),
+import           Dotf.Types              (Bundle (..), Distro (Arch, Deb, Osx),
                                           GitPackage (GitPackage, gitName),
                                           NamedPackage (..), Package (Package))
 import           Dotf.Utils              (distro, getGitInstallPath,
                                           listBundleFiles,
                                           listInstalledPackages, readOverrides)
-import           System.Directory        (XdgDirectory (XdgCache, XdgConfig),
+import           System.Directory        (XdgDirectory (XdgConfig),
                                           createDirectoryIfMissing,
                                           doesDirectoryExist, getXdgDirectory)
 import           System.FilePath         ((</>))
@@ -66,7 +65,7 @@ instance Cloneable GitPackage where
   toCloneProcess pkg = do
     cfg <- readOverrides
     dir <- getGitInstallPath cfg pkg
-    upd <- doesDirectoryExist dir
+    upd <- doesDirectoryExist (dir </> ".git")
     if upd
       then return $ setWorkingDir dir $ proc "git" (args dir upd pkg)
       else return $ proc "git" (args dir upd pkg)
@@ -88,9 +87,11 @@ instance Installable GitPackage where
 -- Methods --
 -------------
 
+-- | Load application bundles from disk.
 loadBundles :: IO [Bundle]
 loadBundles = listBundleFiles >>= mapM Y.decodeFileThrow
 
+-- | Create a new application bundle with a given name.
 newBundle :: String -> IO ()
 newBundle name = do
   base <- getXdgDirectory XdgConfig "dotf"
@@ -101,32 +102,39 @@ newBundle name = do
   createDirectoryIfMissing True configDir
   writeFile configFile $ bundleFileTemplate name
 
+-- | List all 'uninstalled' packages for the underlying OS.
 listNewPackages :: [Package] -> IO [String]
 listNewPackages allPkgs = do
-  dist <- distro
+  dist      <- distro
   installed <- listInstalledPackages dist
   let pkgs = filterOsPackages dist allPkgs
       res  = filter (`notElem` installed) pkgs
   return res
 
+-- | Collect all `Package`s from all `Bundle`s.
 collectPackages :: [Bundle] -> [Package]
 collectPackages = foldr (\b acc -> packages b ++ acc) []
 
+-- | Alternative to `collectPackages` which returns `NamedPackage`s.
 collectNamedPackages :: [Bundle] -> [NamedPackage]
 collectNamedPackages = foldr (\b acc -> bundleOsPackages b ++ acc) []
 
+-- | Collect all `GitPackage`s from all `Bundle`s.
 collectGitPackages :: [Bundle] -> [GitPackage]
 collectGitPackages = foldr (\b acc -> bundleGitPackages b ++ acc) []
 
+-- | Collect all scripts from all `Bundle`s.
 collectScripts :: [Bundle] -> [FilePath]
 collectScripts = foldr (\b acc -> scripts b ++ acc) []
 
+-- | Collect 'pre' scripts from all `Bundle`s.
 collectPreScripts :: [Bundle] -> [FilePath]
 collectPreScripts = foldr coll []
   where coll b acc = case bundlePreInstallScript b of
           (Just s) -> s : acc
           Nothing  -> acc
 
+-- | Collect 'post' scripts from all `Bundle`s.
 collectPostScripts :: [Bundle] -> [FilePath]
 collectPostScripts = foldr coll []
   where coll b acc = case bundlePostInstallScript b of

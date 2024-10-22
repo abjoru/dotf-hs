@@ -4,8 +4,7 @@ import           Control.Monad.Extra (ifM, whenM)
 import           Data.Char           (isLetter, toLower)
 import qualified Dotf.Commands       as CMD
 import           Dotf.Options        (Command (Commit, Diff, Git, Init, Install, New, Pull, Push, Status),
-                                      DryMode (Dry, Normal), Options (Options),
-                                      runOpts)
+                                      Options (Options), readOpts)
 import           Dotf.Templates      (missingRepoMessage)
 import           System.Directory    (doesDirectoryExist, getHomeDirectory)
 import           System.Environment  (getArgs)
@@ -38,30 +37,21 @@ checkBareRepo = do
 runArgs :: [String] -> IO ()
 runArgs [] = ifM checkBareRepo tui informMissingRepo
 runArgs args
-  | "init" `elem` args = runOpts >>= runApp
-  | "new" `elem` args  = runOpts >>= runApp
-  | otherwise = ifM checkBareRepo (runOpts >>= runApp) informMissingRepo
+  | "init" `elem` args = readOpts >>= runApp
+  | "new" `elem` args  = readOpts >>= runApp
+  | otherwise = ifM checkBareRepo (readOpts >>= runApp) informMissingRepo
 
 runApp :: Options -> IO ()
-runApp (Options Dry Install)          = CMD.installBundles True
-runApp (Options Normal Install)       = CMD.installBundles False
-runApp (Options Dry (Init url))       = CMD.clone True url
-runApp (Options Normal (Init "dotf")) = CMD.clone False "git@github.com:abjoru/dotf.git"
-runApp (Options Normal (Init url))    = CMD.clone False url
-runApp (Options Dry New)              = CMD.newBareRepo True
-runApp (Options Normal New)           = CMD.newBareRepo False
-runApp (Options Dry Pull)             = CMD.pull True
-runApp (Options Normal Pull)          = CMD.pull False
-runApp (Options Dry Push)             = CMD.push True
-runApp (Options Normal Push)          = CMD.push False
-runApp (Options Dry (Commit m))       = CMD.commit True m
-runApp (Options Normal (Commit m))    = CMD.commit False m
-runApp (Options Dry Diff)             = CMD.diffState True
-runApp (Options Normal Diff)          = CMD.diffState False
-runApp (Options Dry Status)           = CMD.status True
-runApp (Options Normal Status)        = CMD.status False
-runApp (Options Dry (Git cmd))        = CMD.gitRaw True cmd
-runApp (Options Normal (Git cmd))     = CMD.gitRaw False cmd
+runApp (Options dry h Install)         = CMD.installBundles dry h
+runApp (Options dry _ (Init "abjoru")) = CMD.clone dry "git@github.com:abjoru/dotf.git"
+runApp (Options dry _ (Init url))      = CMD.clone dry url
+runApp (Options dry _ New)             = CMD.newBareRepo dry
+runApp (Options dry _ Pull)            = CMD.pull dry
+runApp (Options dry _ Push)            = CMD.push dry
+runApp (Options dry _ (Commit m))      = CMD.commit dry m
+runApp (Options dry _ Diff)            = CMD.diffState dry
+runApp (Options dry _ Status)          = CMD.status dry
+runApp (Options dry _ (Git cmd))       = CMD.gitRaw dry cmd
 
 doInstall :: IO ()
 doInstall = askInstall >>= check

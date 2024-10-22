@@ -67,5 +67,5 @@ doEditBundle = do
 doEditScript :: DEvent ()
 doEditScript = do
   script <- use scriptsL
-  file   <- liftIO $ resolveScriptFile (snd <$> listSelectedElement script)
+  file   <- liftIO $ resolveScript' (snd <$> listSelectedElement script)
   maybeEditFile file

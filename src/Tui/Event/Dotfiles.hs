@@ -6,7 +6,7 @@ import           Brick.Widgets.List  (handleListEvent, handleListEventVi,
                                       listSelectedL)
 import           Control.Monad.State (MonadIO (liftIO))
 import           Data.Text.Zipper    (stringZipper)
-import         qualified  Dotf.Commands as CMD
+import qualified Dotf.Commands       as CMD
 import           Dotf.Types
 import           Dotf.Utils
 import           Graphics.Vty        (Event (EvKey), Key (KChar, KEsc))
@@ -60,19 +60,19 @@ doShowToggle = do
 doEditTracked :: DEvent ()
 doEditTracked = do
   state <- get
-  file  <- liftIO $ resolveGitFile (trackedSelFilePath state)
+  file  <- liftIO $ resolveDotFile (trackedSelFilePath state)
   maybeEditFile file
 
 doEditUntracked :: DEvent ()
 doEditUntracked = do
   state <- get
-  file  <- liftIO $ resolveGitFile (untrackedSel state)
+  file  <- liftIO $ resolveDotFile (untrackedSel state)
   maybeEditFile file
 
 doDiff :: DEvent ()
 doDiff = do
   state <- get
-  file  <- liftIO $ resolveGitFile (trackedSelFilePath state)
+  file  <- liftIO $ resolveDotFile (trackedSelFilePath state)
   maybeDiffFile file
 
 doFocusLeft :: DEvent ()
