@@ -6,11 +6,13 @@ module Dotf.Options (
 ) where
 
 import           Data.String.Interpolate (__i)
+import           Data.Version            (showVersion)
 import           Dotf.Types              (Dry, Headless)
 import           Options.Applicative     (Parser, argument, command, execParser,
                                           flag, fullDesc, help, helper,
                                           hsubparser, info, long, metavar,
                                           progDesc, short, str, (<**>))
+import           Paths_dotf_hs           (version)
 
 -----------
 -- Types --
@@ -83,7 +85,7 @@ parseOptions = Options <$> parseDryMode <*> parseHeadless <*> parseCommand
 -- | Executes the `Options` parser on the program args.
 readOpts :: IO Options
 readOpts = execParser $ info (parseOptions <**> helper)
-  (fullDesc <> progDesc [__i|DotF :: The simple dot-file manager.
+  (fullDesc <> progDesc [__i|DotF #{showVersion version} :: The simple dot-file manager.
 
                              This little application allows for setting up standard applications that
                              should be installed on a new system. It wraps some GIT commands to make

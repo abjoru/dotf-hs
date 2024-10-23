@@ -39,7 +39,10 @@ instance ToWidget Tab where
   toWidget _ eFocus t = withAttr (attr t eFocus) $ padRight (Pad 1) $ str (show t)
 
 instance ToWidget Bundle where
-  toWidget _ eFocus b = withAttr (attr b eFocus) $ str (bundleName b)
+  toWidget _ eFocus b = 
+    if bundleHeadless b
+    then withAttr (attr b eFocus) $ str (bundleName b ++ " [Headless]")
+    else withAttr (attr b eFocus) $ str (bundleName b)
 
 ver :: String
 ver = "DotF " ++ showVersion version
