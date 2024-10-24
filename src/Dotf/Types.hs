@@ -40,12 +40,13 @@ data NamedPackage = NamedPackage String Package
   deriving (Show, Eq, Ord)
 
 data GitPackage = GitPackage {
-  gitName       :: String,
-  gitSkip       :: [String],
-  gitUrl        :: String,
-  gitBranch     :: Maybe String,
-  gitSubmodules :: Bool,
-  gitInstallCmd :: Maybe String
+  gitName        :: String,
+  gitSkip        :: [String],
+  gitUrl         :: String,
+  gitBranch      :: Maybe String,
+  gitSubmodules  :: Bool,
+  gitInstallCmd  :: Maybe String,
+  gitInstallPath :: Maybe FilePath
 } deriving (Show, Eq, Ord)
 
 data Bundle = Bundle {
@@ -126,6 +127,7 @@ instance FromJSON GitPackage where
                <*> o .:? "branch"
                <*> o .:? "submodules" .!= False
                <*> o .:? "install-cmd"
+               <*> o .:? "install-path"
   parseJSON _ = fail "Expected Object for GitPackage value"
 
 instance FromJSON Bundle where

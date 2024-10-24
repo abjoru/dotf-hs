@@ -69,15 +69,15 @@ instance Cloneable GitPackage where
     if upd
       then return $ setWorkingDir dir $ proc "git" (args dir upd pkg)
       else return $ proc "git" (args dir upd pkg)
-    where args _ True (GitPackage _ _ _ _ True _)      = ["pull", "--recurse-submodules"]
-          args _ True _                                = ["pull"]
-          args d _ (GitPackage _ _ u Nothing False _)  = ["clone", u, d]
-          args d _ (GitPackage _ _ u Nothing True _)   = ["clone", "--recurse-submodules", u, d]
-          args d _ (GitPackage _ _ u (Just b) False _) = ["clone", "-b", b, u, d]
-          args d _ (GitPackage _ _ u (Just b) True _)  = ["clone", "--recurse-submodules", "-b", b, u, d]
+    where args _ True (GitPackage _ _ _ _ True _ _)      = ["pull", "--recurse-submodules"]
+          args _ True _                                  = ["pull"]
+          args d _ (GitPackage _ _ u Nothing False _ _)  = ["clone", u, d]
+          args d _ (GitPackage _ _ u Nothing True _ _)   = ["clone", "--recurse-submodules", u, d]
+          args d _ (GitPackage _ _ u (Just b) False _ _) = ["clone", "-b", b, u, d]
+          args d _ (GitPackage _ _ u (Just b) True _ _)  = ["clone", "--recurse-submodules", "-b", b, u, d]
 
 instance Installable GitPackage where
-  toInstallProcess _ pkg@(GitPackage _ _ _ _ _ (Just cmd)) = do
+  toInstallProcess _ pkg@(GitPackage _ _ _ _ _ (Just cmd) _) = do
     cfg <- readOverrides
     dir <- getGitInstallPath cfg pkg
     return $ setWorkingDir dir $ proc "bash" ["-c", cmd]
@@ -88,6 +88,7 @@ instance Installable GitPackage where
 -------------
 
 -- | Load application bundles from disk.
+-- FIXME resolve git paths here so we don't have to do it everywhere!
 loadBundles :: IO [Bundle]
 loadBundles = listBundleFiles >>= mapM Y.decodeFileThrow
 

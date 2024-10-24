@@ -50,7 +50,9 @@ bundleFileTemplate name =
       \# [Optional] A package may want to fetch submodules (default: false)
       \#submodules: false
       \# [Optional] A package may have an install command
-      \#install-cmd: "stack install"|]
+      \#install-cmd: "stack install"
+      \# [Optional] Install path starting from $HOME
+      \#install-path: "my-git-package-sources"|]
 
 missingRepoMessage :: String
 missingRepoMessage =

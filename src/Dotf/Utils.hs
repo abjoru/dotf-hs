@@ -26,7 +26,7 @@ import           Data.Either.Utils       (forceEither)
 import qualified Data.Map                as M
 import           Data.String.Interpolate (i)
 import           Dotf.Types              (Distro (Arch, Deb, Osx, Unsupported),
-                                          GitPackage, gitName)
+                                          GitPackage (gitInstallPath), gitName)
 import           System.Directory        (XdgDirectory (XdgCache, XdgConfig),
                                           doesDirectoryExist, doesFileExist,
                                           getHomeDirectory, getXdgDirectory,
@@ -177,4 +177,6 @@ getGitInstallPath m pkg = do
   cache <- getXdgDirectory XdgCache "dotf"
   return $ case M.lookup (gitName pkg) m of
     Just p  -> home </> p
-    Nothing -> cache </> gitName pkg
+    Nothing -> resolve home cache (gitInstallPath pkg) (gitName pkg)
+  where resolve home _ (Just rel) _ = home </> rel
+        resolve _ cache _ n         = cache </> n
