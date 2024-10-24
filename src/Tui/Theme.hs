@@ -26,10 +26,12 @@ class TypeAttr a where
   attr :: a -> Bool -> AttrName
 
 instance TypeAttr TrackedType where
-  attr _ True               = attrSelItem
   attr (Tracked _) False    = attrItem
   attr (Staged _ _) False   = attrStagedItem
+  attr (Staged _ _) True    = attrStagedSelItem
   attr (Unstaged _ _) False = attrUnstagedItem
+  attr (Unstaged _ _) True  = attrUnstagedSelItem
+  attr _ True               = attrSelItem
 
 instance TypeAttr FilePath where
   attr _ True  = attrSelItem
@@ -68,7 +70,9 @@ theme = newTheme
   , (attrSelItem, black `on` yellow)
   , (attrItem, fg brightWhite)
   , (attrStagedItem, fg green)
+  , (attrStagedSelItem, green `on` yellow)
   , (attrUnstagedItem, fg red)
+  , (attrUnstagedSelItem, red `on` yellow)
   ]
 
 attrKey :: AttrName
@@ -104,5 +108,11 @@ attrItem = attrName "item"
 attrStagedItem :: AttrName
 attrStagedItem = attrName "staged-item"
 
+attrStagedSelItem :: AttrName
+attrStagedSelItem = attrName "staged-sel-item"
+
 attrUnstagedItem :: AttrName
 attrUnstagedItem = attrName "unstaged-item"
+
+attrUnstagedSelItem :: AttrName
+attrUnstagedSelItem = attrName "unstaged-sel-item"
