@@ -14,7 +14,8 @@ import qualified Data.ByteString.Lazy       as B
 import qualified Data.ByteString.Lazy.Char8 as C8
 import           Data.Function              ((&))
 import           Dotf.Types                 (ErrorOrFilePaths, ErrorOrString,
-                                             GitError (GitError), TrackedType)
+                                             GitError (GitError), GitPackage,
+                                             TrackedType)
 import           Dotf.Utils                 (gitDir, workTree)
 import           System.Directory           (doesPathExist, getHomeDirectory)
 import           System.FilePath            ((</>))
@@ -49,7 +50,7 @@ gitBare args = do
 -- | Alternative to `gitBare` which redirects output to /dev/null.
 gitBareSilent :: [String] -> IO (PT.ProcessConfig () () ())
 gitBareSilent args = do
-  cfg <- gitBare args
+  cfg     <- gitBare args
   devNull <- openFile "/dev/null" WriteMode
   return $ cfg & PT.setStdout (PT.useHandleClose devNull)
                & PT.setStderr (PT.useHandleClose devNull)
@@ -57,7 +58,7 @@ gitBareSilent args = do
 -- | Process file list results.
 processFileListResult :: ReadProcessResult -> ErrorOrFilePaths
 processFileListResult (PT.ExitFailure cd, _, err) = Left $ GitError cd err
-processFileListResult (PT.ExitSuccess, out, _) = Right $ fmap C8.unpack (C8.lines out)
+processFileListResult (PT.ExitSuccess, out, _)    = Right $ fmap C8.unpack (C8.lines out)
 
 -- | Process string results.
 processStringResult :: ReadProcessResult -> ErrorOrString

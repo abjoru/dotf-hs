@@ -54,13 +54,19 @@ import           Control.Monad.State (MonadIO (liftIO))
 import           Data.Maybe          (fromMaybe)
 import           Data.Text.Zipper    (getText)
 import qualified Data.Vector         as V
-import           Dotf.Bundles
+import           Dotf.Bundles        (collectGitPackages, collectNamedPackages,
+                                      collectScripts, loadBundles)
 import qualified Dotf.Commands       as CMD
-import           Dotf.Types
-import           Dotf.Utils
+import           Dotf.Types          (Bundle (bundleName), Distro (Unsupported),
+                                      GitError,
+                                      GitPackage (gitBranch, gitName, gitUrl),
+                                      NamedPackage (NamedPackage),
+                                      Package (Package), Path (toPath),
+                                      TrackedType)
+import           Dotf.Utils          (editFile, runDiff)
 import           Lens.Micro          (Lens', lens, (%~), (^.))
 import           Lens.Micro.Mtl      (use, (.=))
-import           Text.Regex.PCRE
+import           Text.Regex.PCRE     ((=~))
 import           Tui.Popup           (Popup)
 
 -----------
@@ -167,12 +173,12 @@ emptyState = State {
 -- | Simple `State` constructor.
 withState :: [TrackedType] -> [FilePath] -> [Bundle] -> State
 withState ts us bs = emptyState {
-  _tracked = L.list RTrackedList (V.fromList ts) 1,
-  _untracked = L.list RUntrackedList (V.fromList us) 1,
-  _bundles = L.list RBundleList (V.fromList bs) 1,
-  _packages = L.list RPackageList (V.fromList $ mkPkgRows bs) 1,
+  _tracked     = L.list RTrackedList (V.fromList ts) 1,
+  _untracked   = L.list RUntrackedList (V.fromList us) 1,
+  _bundles     = L.list RBundleList (V.fromList bs) 1,
+  _packages    = L.list RPackageList (V.fromList $ mkPkgRows bs) 1,
   _gitPackages = L.list RGitPackageList (V.fromList $ mkGitRows bs) 1,
-  _scripts = L.list RScriptList (V.fromList $ collectScripts bs) 1
+  _scripts     = L.list RScriptList (V.fromList $ collectScripts bs) 1
 }
 
 -- | Create TUI table rows for packages in provided bundles.

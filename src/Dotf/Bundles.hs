@@ -2,6 +2,7 @@
 module Dotf.Bundles (
   Cloneable(..),
   Installable(..),
+  Updatable(..),
 
   loadBundles,
   newBundle,
@@ -27,7 +28,8 @@ import           System.Directory        (XdgDirectory (XdgConfig),
                                           createDirectoryIfMissing,
                                           doesDirectoryExist, getXdgDirectory)
 import           System.FilePath         ((</>))
-import           System.Process.Typed    (ProcessConfig, proc, setWorkingDir)
+import           System.Process.Typed    (ProcessConfig, proc, readProcess,
+                                          runProcess, setWorkingDir)
 
 -----------------
 -- Typeclasses --
@@ -38,6 +40,10 @@ class Cloneable a where
 
 class Installable a where
   toInstallProcess :: Distro -> a -> IO (ProcessConfig () () ())
+
+class Updatable a where
+  hasUpdates :: a -> IO Bool
+  toUpdateProcess :: a -> IO (ProcessConfig () () ())
 
 ---------------
 -- Instances --
@@ -82,6 +88,24 @@ instance Installable GitPackage where
     dir <- getGitInstallPath cfg pkg
     return $ setWorkingDir dir $ proc "bash" ["-c", cmd]
   toInstallProcess _ p = return $ proc "echo" [[i|No install command for GIT package '#{gitName p}'|]]
+
+-- TODO create 'update' command that pulls and reinstall git packages
+-- IFF repo is out of sync.
+instance Updatable GitPackage where
+  hasUpdates pkg = do
+    cfg    <- readOverrides
+    dir    <- getGitInstallPath cfg pkg
+    _      <- runProcess $ setWorkingDir dir $ proc "git" ["fetch"]
+    local  <- readProcess $ setWorkingDir dir $ proc "git" ["rev-parse", "@"]
+    remote <- readProcess $ setWorkingDir dir $ proc "git" ["rev-parse", "@{u}"]
+    return (local /= remote)
+
+  toUpdateProcess pkg = do
+    cfg <- readOverrides
+    dir <- getGitInstallPath cfg pkg
+    return $ setWorkingDir dir $ proc "git" (args pkg)
+    where args (GitPackage _ _ _ _ True _) = ["pull", "--recurse-submodules"]
+          args _                           = ["pull"]
 
 -------------
 -- Methods --

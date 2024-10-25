@@ -19,15 +19,31 @@ import           Brick.Widgets.Edit   (getEditContents, renderEditor)
 import qualified Brick.Widgets.Table  as T
 import qualified Data.Vector          as V
 import           Data.Version         (showVersion)
-import           Dotf.Types
-import           Lens.Micro
+import           Dotf.Types           (Bundle (bundleHeadless, bundleName),
+                                       TrackedType)
+import           Lens.Micro           ((^.))
 import           Tui.Popup            (renderPopup)
-import           Tui.State
-import           Tui.Theme
+import           Tui.State            (Focus (..), GitRow (..), PkgRow (..),
+                                       RName, State (..), Tab (..), bundlesL,
+                                       commitEditL, commitL, countTracked,
+                                       countUntracked, filterEditL, filterL,
+                                       gitPackagesL, hasFocus, ignoreEditL,
+                                       ignoreL, newBundleEditL, newBundleL,
+                                       packagesL, scriptsL)
+import           Tui.Theme            (TypeAttr (attr), attrAppName, attrItem,
+                                       attrTitle, attrTitleFocus)
+
+-----------------
+-- Typeclasses --
+-----------------
 
 class ToWidget a where
   -- Uses componentFocus -> elementFocus -> element
   toWidget :: Bool -> Bool -> a -> Widget RName
+
+---------------
+-- Instances --
+---------------
 
 instance ToWidget TrackedType where
   toWidget cFocus focus t = withAttr (attr t (cFocus && focus)) $ str (show t)
@@ -39,10 +55,13 @@ instance ToWidget Tab where
   toWidget _ eFocus t = withAttr (attr t eFocus) $ padRight (Pad 1) $ str (show t)
 
 instance ToWidget Bundle where
-  toWidget _ eFocus b = 
-    if bundleHeadless b
-    then withAttr (attr b eFocus) $ str (bundleName b ++ " [Headless]")
-    else withAttr (attr b eFocus) $ str (bundleName b)
+  toWidget _ eFocus b
+    | bundleHeadless b = withAttr (attr b eFocus) $ str (bundleName b ++ " [Headless]")
+    | otherwise        = withAttr (attr b eFocus) $ str (bundleName b)
+
+-------------
+-- Widgets --
+-------------
 
 ver :: String
 ver = "DotF " ++ showVersion version
@@ -76,10 +95,9 @@ gitColWidths rows =
 
 ui :: State -> [Widget RName]
 ui st = maybe [drawUi] (\p -> [renderPopup p, drawUi]) (_popup st)
- where
-  drawUi = case _tab st of
-    DotfileTab -> dotfileTab st
-    BundleTab  -> bundleTab st
+ where drawUi = case _tab st of
+         DotfileTab -> dotfileTab st
+         BundleTab  -> bundleTab st
 
 dotfileTab :: State -> Widget RName
 dotfileTab s = drawUi (_ignore s) (_filter s) (_commit s)

@@ -31,7 +31,11 @@ import           Dotf.Bundles         (Cloneable (toCloneProcess),
                                        collectGitPackages, collectPackages,
                                        collectPostScripts, collectPreScripts,
                                        loadBundles)
-import           Dotf.Git
+import           Dotf.Git             (gitBare, gitBareSilent, gitTracked,
+                                       gitTrackedStaged, gitTrackedUnstaged,
+                                       gitUntracked, mapEitherM,
+                                       processFileListResult,
+                                       processStringResult)
 import           Dotf.Types           (Bundle (..),
                                        Distro (Arch, Osx, Unsupported), Dry,
                                        ErrorOrFilePaths, ErrorOrString,

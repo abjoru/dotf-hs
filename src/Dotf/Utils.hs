@@ -37,7 +37,10 @@ import           System.IO               (IOMode (WriteMode), hClose, withFile)
 import           System.OsRelease        (OsRelease (name),
                                           OsReleaseResult (osRelease),
                                           parseOsRelease)
-import           System.Process
+import           System.Process          (CreateProcess (cwd, std_in, std_out),
+                                          StdStream (CreatePipe, UseHandle),
+                                          callProcess, createProcess, proc,
+                                          readProcess, waitForProcess)
 
 -- | Open 'nvim' with the given file as input.
 editFile :: FilePath -> IO ()

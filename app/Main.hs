@@ -3,8 +3,7 @@ module Main (main) where
 import           Control.Monad.Extra (ifM, whenM)
 import           Data.Char           (isLetter, toLower)
 import qualified Dotf.Commands       as CMD
-import           Dotf.Options        (Command (Commit, Diff, Git, Init, Install, New, Pull, Push, Status),
-                                      Options (Options), readOpts)
+import           Dotf.Options        (Command (..), Options (Options), readOpts)
 import           Dotf.Templates      (missingRepoMessage)
 import           System.Directory    (doesDirectoryExist, getHomeDirectory)
 import           System.Environment  (getArgs)

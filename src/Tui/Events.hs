@@ -6,7 +6,7 @@ module Tui.Events (
 
 import           Brick               (BrickEvent (VtyEvent), halt)
 import           Brick.Widgets.List  (listSelectedL)
-import           Graphics.Vty
+import           Graphics.Vty        (Event (EvKey), Key (KBackTab, KChar))
 import           Lens.Micro.Mtl      (use, zoom, (.=))
 import           Tui.Event.Bundles   (bundlesEvent)
 import           Tui.Event.Commit    (editCommitEvent)
@@ -14,7 +14,9 @@ import           Tui.Event.Dotfiles  (dotfilesEvent)
 import           Tui.Event.Filter    (editFilterEvent)
 import           Tui.Event.Ignore    (editIgnoreEvent)
 import           Tui.Event.NewBundle (newBundleEvent)
-import           Tui.State
+import           Tui.State           (DEvent, Focus (..), RName, Tab (..),
+                                      bundlesL, commitL, filterL, focusL,
+                                      ignoreL, newBundleL, syncUntracked, tabL)
 
 --------------------
 -- Event Handlers --

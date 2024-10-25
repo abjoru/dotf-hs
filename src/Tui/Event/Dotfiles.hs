@@ -1,17 +1,25 @@
 module Tui.Event.Dotfiles (dotfilesEvent) where
 
-import           Brick
+import           Brick               (get, zoom)
 import           Brick.Widgets.Edit  (editContentsL)
 import           Brick.Widgets.List  (handleListEvent, handleListEventVi,
                                       listSelectedL)
 import           Control.Monad.State (MonadIO (liftIO))
 import           Data.Text.Zipper    (stringZipper)
 import qualified Dotf.Commands       as CMD
-import           Dotf.Types
-import           Dotf.Utils
+import           Dotf.Types          (TrackedType (Staged, Tracked, Unstaged))
+import           Dotf.Utils          (resolveDotFile)
 import           Graphics.Vty        (Event (EvKey), Key (KChar, KEsc))
 import           Lens.Micro.Mtl      (use, (.=))
-import           Tui.State
+import           Tui.State           (DEvent,
+                                      Focus (FIgnoreEditor, FTracked, FUntracked),
+                                      Tab (DotfileTab), commitL, filterEditL,
+                                      filterL, focusL, ignoreEditL, ignoreL,
+                                      maybeDiffFile, maybeEditFile,
+                                      showAllTrackedL, syncDotfiles,
+                                      syncTracked, tabL, trackedL, trackedSel,
+                                      trackedSelFilePath, untrackedL,
+                                      untrackedSel)
 
 --------------------
 -- Event Handlers --

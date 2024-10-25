@@ -1,12 +1,16 @@
 module Tui.Event.Bundles (bundlesEvent) where
 
-import           Brick
-import           Brick.Widgets.List
+import           Brick               (get, zoom)
+import           Brick.Widgets.List  (handleListEvent, handleListEventVi,
+                                      listSelectedElement, listSelectedL)
 import           Control.Monad.State (MonadIO (liftIO))
-import           Dotf.Utils
-import           Graphics.Vty
-import           Lens.Micro.Mtl
-import           Tui.State
+import           Dotf.Utils          (resolveBundleFile, resolveScript')
+import           Graphics.Vty        (Event (EvKey), Key (KChar, KEsc))
+import           Lens.Micro.Mtl      (use, (.=))
+import           Tui.State           (DEvent, Focus (..), bundleSelFile,
+                                      bundlesL, focusL, gitPackagesL,
+                                      maybeEditFile, newBundleL, packagesL,
+                                      scriptsL, selectBundle, syncBundles)
 
 --------------------
 -- Event Handlers --

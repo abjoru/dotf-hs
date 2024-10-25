@@ -18,9 +18,12 @@ import qualified Brick.Widgets.Border as B
 import qualified Brick.Widgets.Dialog as D
 import qualified Brick.Widgets.Edit   as E
 import qualified Brick.Widgets.List   as L
-import           Dotf.Types
-import           Graphics.Vty
-import           Tui.State
+import           Dotf.Types           (Bundle, TrackedType (..))
+import           Graphics.Vty         (Color, black, bold, brightBlack,
+                                       brightCyan, brightMagenta, brightWhite,
+                                       brightYellow, green, red, rgbColor,
+                                       underline, white, withStyle, yellow)
+import           Tui.State            (Tab)
 
 class TypeAttr a where
   attr :: a -> Bool -> AttrName

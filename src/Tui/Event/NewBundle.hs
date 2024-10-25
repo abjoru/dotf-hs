@@ -8,8 +8,10 @@ import           Graphics.Vty        (Event (EvKey), Key (KEnter, KEsc))
 import           Lens.Micro          ((^.))
 import           Lens.Micro.Mtl      (use, zoom, (.=))
 
-import           Dotf.Bundles
-import           Tui.State
+import           Dotf.Bundles        (newBundle)
+import           Tui.State           (DEvent, Focus (FBundleList), RName,
+                                      focusL, newBundleEditL, newBundleL,
+                                      syncBundles)
 
 --------------------
 -- Event Handlers --

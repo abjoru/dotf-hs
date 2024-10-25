@@ -1,10 +1,11 @@
 module Tui.Event.Filter (editFilterEvent) where
 
-import Brick
-import Brick.Widgets.Edit
-import Graphics.Vty
-import Lens.Micro.Mtl
-import Tui.State
+import           Brick              (BrickEvent (VtyEvent), zoom)
+import           Brick.Widgets.Edit (handleEditorEvent)
+import           Graphics.Vty       (Event (EvKey), Key (KEnter, KEsc))
+import           Lens.Micro.Mtl     ((.=))
+import           Tui.State          (DEvent, Focus (FUntracked), RName,
+                                     filterEditL, filterL, focusL, syncDotfiles)
 
 --------------------
 -- Event Handlers --

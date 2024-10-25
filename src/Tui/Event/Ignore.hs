@@ -9,7 +9,8 @@ import           Lens.Micro          ((^.))
 import           Lens.Micro.Mtl      (use, zoom, (.=))
 
 import qualified Dotf.Commands       as CMD
-import           Tui.State
+import           Tui.State           (DEvent, Focus (FUntracked), RName, focusL,
+                                      ignoreEditL, ignoreL, syncUntracked)
 
 --------------------
 -- Event Handlers --
