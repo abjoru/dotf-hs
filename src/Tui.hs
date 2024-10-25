@@ -16,14 +16,13 @@ import           Tui.Theme     (theme)
 import           Tui.Widgets   (ui)
 
 app :: App State e RName
-app =
-  App
-    { appDraw = ui
-    , appChooseCursor = appCursor
-    , appHandleEvent = handleEvents
-    , appStartEvent = return ()
-    , appAttrMap = const $ themeToAttrMap theme
-    }
+app = App {
+  appDraw         = ui,
+  appChooseCursor = appCursor,
+  appHandleEvent  = handleEvents,
+  appStartEvent   = return (),
+  appAttrMap      = const $ themeToAttrMap theme
+}
 
 appCursor :: State -> [CursorLocation RName] -> Maybe (CursorLocation RName)
 appCursor state r = case state ^. focusL of

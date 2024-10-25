@@ -66,6 +66,33 @@ instance ToWidget Bundle where
 ver :: String
 ver = "DotF " ++ showVersion version
 
+dotfHelpLine1 :: [(String, String)]
+dotfHelpLine1 = [ ("j/k:", " Up/Down ")
+                , ("Ctrl+h/l:", " Switch Left/Right ")
+                , ("(Shift) Tab:", " Switch Focus ")
+                , ("f/F:", " Filter/Clear ")
+                , ("q:", " Quit")
+                ]
+
+dotfHelpLine2 :: [(String, String)]
+dotfHelpLine2 = [ ("e:", " Edit ")
+                , ("d:", " Diff ")
+                , ("a:", " Show All ")
+                , ("c:", " Commit ")
+                , ("A/R:", " Add/Remove File ")
+                , ("I:", " Ignore Untracked")
+                ]
+
+bundleHelpLine1 :: [(String, String)]
+bundleHelpLine1 = [ ("j/k:", " Up/Down ")
+                  , ("Esc:", " Deselect ")
+                  , ("(Shift) Tab:", " Switch Focus ")
+                  , ("q:", " Quit")
+                  ]
+
+bundleHelpLine2 :: [(String, String)]
+bundleHelpLine2 = [ ("n:", " New Bundle "), ("e:", " Edit")]
+
 pkgHeaderRow :: PkgRow
 pkgHeaderRow = PkgRow "Name" "Arch" "OSX" "Deb"
 
@@ -105,20 +132,20 @@ dotfileTab s = drawUi (_ignore s) (_filter s) (_commit s)
   drawUi True _ _    = tabComp <=> (trackedComp <+> untrackedComp) <=> ignoreComp s <=> dotfHelp
   drawUi _ True _    = tabComp <=> (trackedComp <+> untrackedComp) <=> filterComp s <=> dotfHelp
   drawUi _ _ True    = tabComp <=> (trackedComp <+> untrackedComp) <=> commitComp s <=> dotfHelp
-  drawUi _ _ _ = tabComp <=> (trackedComp <+> untrackedComp) <=> dotfHelp
-  tabComp = tabLine DotfileTab ver
-  tcount = countTracked s
-  ucount = countUntracked s
-  trackedTitle = title (filterTitle s ++ " Tracked " ++ show tcount ++ " ") $ hasFocus FTracked s
+  drawUi _ _ _       = tabComp <=> (trackedComp <+> untrackedComp) <=> dotfHelp
+  tabComp        = tabLine DotfileTab ver
+  tcount         = countTracked s
+  ucount         = countUntracked s
+  trackedTitle   = title (filterTitle s ++ " Tracked " ++ show tcount ++ " ") $ hasFocus FTracked s
   untrackedTitle = title (filterTitle s ++ " Untracked " ++ show ucount ++ " ") $ hasFocus FUntracked s
-  mkTracked = trackedList (_tracked s) $ hasFocus FTracked s
-  mkUntracked = untrackedList (_untracked s) $ hasFocus FUntracked s
-  trackedComp = borderWithLabel trackedTitle mkTracked
-  untrackedComp = borderWithLabel untrackedTitle mkUntracked
+  mkTracked      = trackedList (_tracked s) $ hasFocus FTracked s
+  mkUntracked    = untrackedList (_untracked s) $ hasFocus FUntracked s
+  trackedComp    = borderWithLabel trackedTitle mkTracked
+  untrackedComp  = borderWithLabel untrackedTitle mkUntracked
 
 filterTitle :: State -> String
 filterTitle state =
-  let editor = _filterEdit state
+  let editor  = _filterEdit state
       content = getEditContents editor
   in case head content of
     "" -> ""
@@ -143,31 +170,19 @@ commitComp state = border $ withAttr attrTitle $ str "Commit Msg: " <+> (hLimitP
   where editor = renderEditor (str . unlines) (state ^. commitL) (state ^. commitEditL)
 
 dotfHelp :: Widget RName
-dotfHelp = border . hCenter $
-    hCenter (   tip "j/k:" " Up/Down  "
-            <+> tip "Ctrl+h/l:" " Switch Left/Right  "
-            <+> tip "(Shift) Tab:" " Switch Focus  "
-            <+> tip "f/F" " Filter/Clear "
-            <+> tip "q:" " Quit"
-            ) <=>
-    hCenter (   tip "e:" " Edit  "
-            <+> tip "d:" " Diff "
-            <+> tip "a:" " Show All  "
-            <+> tip "c:" " Commit  "
-            <+> tip "A/R:" " Add/Remove File  "
-            <+> tip "I:" " Ignore Untracked  "
-            )
- where tip k v = withAttr attrTitle $ str k <+> withAttr attrItem (str v)
+dotfHelp =
+  let line1 = foldr ((<+>) . tip) (str "") dotfHelpLine1
+      line2 = foldr ((<+>) . tip) (str "") dotfHelpLine2
+  in border . hCenter $ hCenter line1 <=> hCenter line2
 
 bundleHelp :: Widget RName
-bundleHelp = border . hCenter $
-    hCenter (   tip "j/k:" " Up/Down  "
-            <+> tip "Esc:" " Deselect  "
-            <+> tip "(Shift) Tab:" " Switch Focus  "
-            <+> tip "q:" " Quit"
-            ) <=>
-    hCenter (tip "n:" " New Bundle  " <+> tip "e:" " Edit")
- where tip k v = withAttr attrTitle $ str k <+> withAttr attrItem (str v)
+bundleHelp =
+  let line1 = foldr ((<+>) . tip) (str "") bundleHelpLine1
+      line2 = foldr ((<+>) . tip) (str "") bundleHelpLine2
+  in border . hCenter $ hCenter line1 <=> hCenter line2
+
+tip :: (String, String) -> Widget n
+tip (k, v) = withAttr attrTitle (str k) <+> withAttr attrItem (str v)
 
 bundleTab :: State -> Widget RName
 bundleTab s = drawUi (_newBundle s)

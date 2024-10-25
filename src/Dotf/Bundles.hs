@@ -104,8 +104,8 @@ instance Updatable GitPackage where
     cfg <- readOverrides
     dir <- getGitInstallPath cfg pkg
     return $ setWorkingDir dir $ proc "git" (args pkg)
-    where args (GitPackage _ _ _ _ True _) = ["pull", "--recurse-submodules"]
-          args _                           = ["pull"]
+    where args (GitPackage _ _ _ _ True _ _) = ["pull", "--recurse-submodules"]
+          args _                             = ["pull"]
 
 -------------
 -- Methods --
