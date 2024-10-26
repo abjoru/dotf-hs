@@ -6,6 +6,7 @@ module Dotf.Types (
   Bundle(..),
   TrackedType(..),
   GitError(..),
+  Answer(..),
 
   Dry,
   Headless,
@@ -20,6 +21,7 @@ import           Data.Aeson.Key             (toString)
 import           Data.Aeson.KeyMap          (keys)
 import qualified Data.ByteString.Lazy       as B
 import qualified Data.ByteString.Lazy.Char8 as C8
+import           Data.Char                  (isLetter, toLower)
 import           Data.Yaml                  (FromJSON (parseJSON), withObject,
                                              (.!=), (.:), (.:?))
 import qualified Data.Yaml                  as Y
@@ -79,6 +81,9 @@ type ErrorOrFilePaths = Either GitError [FilePath]
 
 type ErrorOrTracked = Either GitError [TrackedType]
 
+data Answer = Yes | No | DryRun
+  deriving Show
+
 -----------------
 -- Typeclasses --
 -----------------
@@ -89,6 +94,14 @@ class Path a where
 ---------------
 -- Instances --
 ---------------
+
+instance Read Answer where
+  readsPrec _ input = case fmap toLower . filter isLetter $ input of
+    "yes" -> [(Yes, [])]
+    "y"   -> [(Yes, [])]
+    "dry" -> [(DryRun, [])]
+    "d"   -> [(DryRun, [])]
+    _     -> [(No, [])]
 
 instance Show TrackedType where
   show (Tracked fp)        = fp

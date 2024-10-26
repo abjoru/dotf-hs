@@ -1,26 +1,15 @@
 module Main (main) where
 
 import           Control.Monad.Extra (ifM, whenM)
-import           Data.Char           (isLetter, toLower)
 import qualified Dotf.Commands       as CMD
 import           Dotf.Options        (Command (..), Options (Options), readOpts)
 import           Dotf.Templates      (missingRepoMessage)
+import           Dotf.Types          (Answer (..))
 import           System.Directory    (doesDirectoryExist, getHomeDirectory)
 import           System.Environment  (getArgs)
 import           System.FilePath     ((</>))
 import           System.IO           (hFlush, stdout)
 import           Tui                 (tui)
-
-data Answer = Yes | No | DryRun
-  deriving Show
-
-instance Read Answer where
-  readsPrec _ input = case fmap toLower . filter isLetter $ input of
-    "yes" -> [(Yes, [])]
-    "y"   -> [(Yes, [])]
-    "dry" -> [(DryRun, [])]
-    "d"   -> [(DryRun, [])]
-    _     -> [(No, [])]
 
 main :: IO ()
 main = whenM bootstrap $ getArgs >>= runArgs
@@ -42,6 +31,7 @@ runArgs args
 
 runApp :: Options -> IO ()
 runApp (Options dry h Install)         = CMD.installBundles dry h
+runApp (Options dry h Update)          = CMD.updateBundles dry h
 runApp (Options dry _ (Init "abjoru")) = CMD.clone dry "git@github.com:abjoru/dotf.git"
 runApp (Options dry _ (Init url))      = CMD.clone dry url
 runApp (Options dry _ New)             = CMD.newBareRepo dry

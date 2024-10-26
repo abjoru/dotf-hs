@@ -14,8 +14,7 @@ import qualified Data.ByteString.Lazy       as B
 import qualified Data.ByteString.Lazy.Char8 as C8
 import           Data.Function              ((&))
 import           Dotf.Types                 (ErrorOrFilePaths, ErrorOrString,
-                                             GitError (GitError), GitPackage,
-                                             TrackedType)
+                                             GitError (GitError), TrackedType)
 import           Dotf.Utils                 (gitDir, workTree)
 import           System.Directory           (doesPathExist, getHomeDirectory)
 import           System.FilePath            ((</>))

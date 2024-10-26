@@ -2,6 +2,7 @@ module Dotf.Commands (
   checkRequirements,
   installRequirements,
   installBundles,
+  updateBundles,
   listTrackedAll,
   listTracked,
   unsafeListTracked,
@@ -41,8 +42,8 @@ import           Dotf.Types           (Bundle (..),
                                        ErrorOrFilePaths, ErrorOrString,
                                        ErrorOrTracked, GitPackage, Headless,
                                        Package, TrackedType (..))
-import           Dotf.Utils           (appendToFile, distro, gitIgnoreFile,
-                                       resolveScript, which)
+import           Dotf.Utils           (appendToFile, ask', distro,
+                                       gitIgnoreFile, resolveScript, which)
 import           System.Directory     (createDirectoryIfMissing,
                                        doesDirectoryExist, doesFileExist,
                                        getHomeDirectory)
@@ -94,6 +95,21 @@ installBundles dry h = do
   preIO >> pkgIO >> cloneIO >> gitIO >> postIO
   where matchHeadless True False = False
         matchHeadless _ _        = True
+
+updateBundles :: Dry -> Headless -> IO ()
+updateBundles dry h = do
+  dist <- distro
+  bundles <- loadBundles
+  let filtered = filter (matchHeadless h . bundleHeadless) bundles
+      gits     = collectGitPackages dist filtered
+      pkgIO    = whenM askUpdPkg $ updatePackages dry dist
+      gitIO    = whenM askUpdGit (cloneGitPackages dry gits >> installGitPackages dry gits)
+
+  pkgIO >> gitIO
+  where matchHeadless True False = False
+        matchHeadless _ _        = True
+        askUpdPkg = ask' "Do you want to update packages? (y/N) "
+        askUpdGit = ask' "Do you want to update GIT packages? (y/N) "
 
 -- | List ALL tracked files. This includes unchanged
 -- tracked files, staged changes, as well as unstaged
@@ -272,6 +288,20 @@ installHomebrew dry = do
 installPackages :: Dry -> Distro -> [Package] -> IO ()
 installPackages True d pkgs = toInstallProcess d pkgs >>= print
 installPackages _ d pkgs    = toInstallProcess d pkgs >>= PT.runProcess >> pure ()
+
+updatePackages :: Dry -> Distro -> IO ()
+updatePackages dry Arch = do
+  let p = PT.proc "paru" ["-Syyu"]
+  if dry
+    then print p
+    else void $ PT.runProcess p
+updatePackages dry Osx = do
+  let p1 = PT.proc "brew" ["update"]
+      p2 = PT.proc "brew" ["upgrade"]
+  if dry
+    then print p1 >> print p2
+    else void (PT.runProcess p1 >> PT.runProcess p2)
+updatePackages _ _ = putStrLn "Unable to update packages!"
 
 cloneGitPackages :: Dry -> [GitPackage] -> IO ()
 cloneGitPackages True pkgs = forM_ pkgs (toCloneProcess >=> print)

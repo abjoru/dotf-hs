@@ -14,7 +14,9 @@ module Dotf.Utils (
   resolveScript',
   resolveDotFile,
   readOverrides,
-  getGitInstallPath
+  getGitInstallPath,
+  ask,
+  ask'
 ) where
 
 import           Control.Exception       (SomeException, try)
@@ -25,7 +27,8 @@ import           Data.Either             (fromRight)
 import           Data.Either.Utils       (forceEither)
 import qualified Data.Map                as M
 import           Data.String.Interpolate (i)
-import           Dotf.Types              (Distro (Arch, Deb, Osx, Unsupported),
+import           Dotf.Types              (Answer (..),
+                                          Distro (Arch, Deb, Osx, Unsupported),
                                           GitPackage (gitInstallPath), gitName)
 import           System.Directory        (XdgDirectory (XdgCache, XdgConfig),
                                           doesDirectoryExist, doesFileExist,
@@ -33,7 +36,8 @@ import           System.Directory        (XdgDirectory (XdgCache, XdgConfig),
                                           listDirectory)
 import           System.FilePath         (takeExtension, (</>))
 import           System.Info             (os)
-import           System.IO               (IOMode (WriteMode), hClose, withFile)
+import           System.IO               (IOMode (WriteMode), hClose, hFlush,
+                                          stdout, withFile)
 import           System.OsRelease        (OsRelease (name),
                                           OsReleaseResult (osRelease),
                                           parseOsRelease)
@@ -183,3 +187,11 @@ getGitInstallPath m pkg = do
     Nothing -> resolve home cache (gitInstallPath pkg) (gitName pkg)
   where resolve home _ (Just rel) _ = home </> rel
         resolve _ cache _ n         = cache </> n
+
+ask :: String -> IO Answer
+ask msg = putStrLn msg >> hFlush stdout >> read <$> getLine
+
+ask' :: String -> IO Bool
+ask' msg = checkAnswer <$> ask msg
+  where checkAnswer Yes = True
+        checkAnswer _   = False

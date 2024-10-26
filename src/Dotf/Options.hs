@@ -20,6 +20,7 @@ import           Paths_dotf_hs           (version)
 
 data Command
   = Install
+  | Update
   | Init String
   | New
   | Pull
@@ -56,6 +57,7 @@ parseHeadless = flag False True
 parseCommand :: Parser Command
 parseCommand = hsubparser
   (  command "install" (info (pure Install) (progDesc "Install bundles"))
+  <> command "update" (info (pure Update) (progDesc "Update os/git packages"))
   <> command "init" (info parseInit (progDesc "Initialize dot-files bare repo"))
   <> command "new" (info (pure New) (progDesc "Create a new bare repository"))
   <> command "pull" (info (pure Pull) (progDesc "Pull from upstream"))
