@@ -93,8 +93,6 @@ installBundles dry h = do
       postIO   = installPost dry post
 
   preIO >> pkgIO >> cloneIO >> gitIO >> postIO
-  where matchHeadless True False = False
-        matchHeadless _ _        = True
 
 updateBundles :: Dry -> Headless -> IO ()
 updateBundles dry h = do
@@ -106,10 +104,15 @@ updateBundles dry h = do
       gitIO    = whenM askUpdGit (cloneGitPackages dry gits >> installGitPackages dry gits)
 
   pkgIO >> gitIO
-  where matchHeadless True False = False
-        matchHeadless _ _        = True
-        askUpdPkg = ask' "Do you want to update packages? (y/N) "
+  where askUpdPkg = ask' "Do you want to update packages? (y/N) "
         askUpdGit = ask' "Do you want to update GIT packages? (y/N) "
+
+-- system headless -> bundle headless -> Bool
+-- Should return 'False' if system is run in headless mode
+-- but bundle does not have headless set to 'True'.
+matchHeadless :: Headless -> Headless -> Bool
+matchHeadless True False = False
+matchHeadless _ _        = True
 
 -- | List ALL tracked files. This includes unchanged
 -- tracked files, staged changes, as well as unstaged
