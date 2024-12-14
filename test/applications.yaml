@@ -1,0 +1,167 @@
+favorites:
+  - qutebrowser:
+    name: 'QuteBrowser'
+    description: 'Lightweight vim-like web browser'
+    command: 'qutebrowser'
+  - brave:
+    name: 'Crypto'
+    description: 'Brave privacy browser used for Crypto'
+    command: 'brave'
+  - pcmanfm:
+    name: 'PCManFM'
+    description: 'File manager'
+    command: 'pcmanfm'
+  - prusaslicer:
+    name: 'Prusa Slicer'
+    description: 'Prusa 3D printer slicer software'
+    command: 'prusa-slicer'
+  - geary:
+    name: 'Geary'
+    description: 'Geary email client'
+    command: 'geary'
+  - plex:
+    name: 'Plex'
+    description: 'Plex Media Player'
+    command: 'plex-desktop'
+  - ledgerlive:
+    name: 'Ledger Live'
+    description: 'Ledger live desktop'
+    command: 'ledger-live-desktop'
+  - chrome:
+    name: 'Google Chrome'
+    description: 'Google Chrome browser'
+    command: 'google-chrome-stable'
+  - daedalus:
+    name: 'Daedalus'
+    description: 'Daedalus cardano wallet'
+    command: '/home/abjoru/.local/bin/daedalus-mainnet'
+  - tradingview:
+    name: 'TradingView'
+    description: 'TradingView Desktop'
+    command: 'tradingview'
+  - opera:
+    name: 'Opera'
+    description: 'Opera web-browser'
+    command: 'opera'
+  - pureref:
+    name: 'PureRef'
+    description: 'Reference image board'
+    command: 'sh -c "QT_SCALE_FACTOR=1.12 PureRef"'
+
+games:
+  - steam:
+    name: 'Steam'
+    description: 'Game manager and store'
+    command: 'steam'
+
+internet:
+  - qutebrowser:
+    name: 'QuteBrowser'
+    description: 'Lightweight vim-like web browser'
+    command: 'qutebrowser'
+  - brave:
+    name: 'Crypto'
+    description: 'Brave privacy browser used for Crypto'
+    command: 'brave'
+  - firefox:
+    name: 'Firefox'
+    description: 'Open source web browser'
+    command: 'firefox'
+  - chrome:
+    name: 'Google Chrome'
+    description: 'Google Chrome browser'
+    command: 'google-chrome-stable'
+  - discord:
+    name: 'Discord'
+    description: 'Chat and video chat application'
+    command: 'discord'
+  - transmission:
+    name: 'Transmission'
+    description: 'Transmission GTK bittorrent client'
+    command: 'transmission-gtk'
+  - signal:
+    name: 'Signal'
+    description: 'Encrypted messaging app'
+    command: 'signal-desktop'
+
+settings:
+  - arandr:
+    name: 'ARandR'
+    description: 'Screen resolution tool'
+    command: 'arandr'
+  - tweektool:
+    name: 'ArchLinux Tweak Tool'
+    description: 'Arch linux tweak tool'
+    command: 'archlinux-tweak-tool'
+  - lxappearance:
+    name: 'Customize Look and Feel'
+    description: 'Tool to customize look and feel'
+    command: 'lxappearance'
+  - gufw:
+    name: 'Firewall Configuration'
+    description: 'Firewall configuration tool'
+    command: 'sudo gufw'
+  - wally:
+    name: 'Wally'
+    description: 'ErgoDox firmware writer'
+    command: 'wally'
+  - qtpass:
+    name: 'QTPass'
+    description: 'QT frontend to pass'
+    command: 'qtpass'
+  - fontmanager:
+    name: 'FontManager'
+    description: 'GTK based font manager'
+    command: 'font-manager'
+  - printer:
+    name: 'Printer'
+    description: 'GTK printer manager'
+    command: 'system-config-printer'
+
+system:
+  - alacritty:
+    name: 'Alacritty'
+    description: 'Fast terminal emulator'
+    command: 'alacritty'
+  - zsh:
+    name: 'Zsh'
+    description: 'Z shell'
+    terminal: 'zsh'
+  - bash:
+    name: 'Bash Shell'
+    description: 'Bash shell'
+    terminal: 'bash'
+  - htop:
+    name: "HTop"
+    description: 'Process monitoring tool'
+    terminal: 'htop'
+  - fish:
+    name: 'Fish Shell'
+    description: 'Fish shell'
+    terminal: 'fish'
+  - pcmanfm:
+    name: 'PCManFM'
+    description: 'File manager'
+    command: 'pcmanfm'
+  - virtualbox:
+    name: 'VirtualBox'
+    description: 'Virtualization tool'
+    command: 'virtualbox'
+
+office:
+  - evince:
+    name: 'Document Viewer'
+    description: 'Simple document viewer'
+    command: 'evince'
+  - libreoffice:
+    name: 'LibreOffice'
+    description: 'Libre Office suite'
+    command: 'libreoffice'
+  - scanner:
+    name: 'SimpleScan'
+    description: 'Simple scanner frontend'
+    command: 'simple-scan'
+  - scribus:
+    name: 'Scribus'
+    description: 'Desktop Publishing Software'
+    command: 'scribus'

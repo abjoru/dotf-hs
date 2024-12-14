@@ -1,0 +1,25 @@
+name: "shell"
+headless: true
+post-install: scripts/shell/postinstall.sh
+
+os-packages:
+  - zsh:
+      arch: zsh
+  - starship:
+      arch: starship
+      osx: starship
+  - zoxide:
+      arch: zoxide
+      osx: zoxide
+  - vifm:
+      arch: vifm
+      osx: vifm
+  - yazi:
+      arch: yazi
+      osx: yazi
+  - fzf:
+      arch: fzf
+      osx: fzf
+  - pcre:
+      arch: pcre
+      osx: pcre

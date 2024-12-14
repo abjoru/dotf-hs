@@ -43,7 +43,7 @@ scriptListEvent (EvKey KEsc []) = zoom scriptsL $ listSelectedL .= Nothing
 scriptListEvent ev = zoom scriptsL $ handleListEventVi handleListEvent ev
 
 -------------
--- Actions --
+--Actions --
 -------------
 
 doCreateNewBundle :: DEvent ()

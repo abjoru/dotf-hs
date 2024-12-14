@@ -1,5 +1,5 @@
 name:                dotf-hs
-version:             1.0.0.0
+version:             1.0.1.0
 github:              "abjoru/dotf-hs"
 license:             BSD-3-Clause
 author:              "Andreas Bjoru"
@@ -88,3 +88,4 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - dotf-hs
+    - hspec

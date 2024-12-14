@@ -1,0 +1,26 @@
+name: "desktop"
+pre-install: scripts/desktop/preinstall.sh
+
+os-packages:
+  - alacritty:
+      arch: alacritty
+      osx: alacritty
+  - kitty:
+      arch: kitty
+      osx: kitty
+  - nitrogen:
+      arch: nitrogen
+  - volumeicon:
+      arch: volumeicon
+  - trayer:
+      arch: trayer
+
+git-packages:
+  - name: blueberry-monad
+    ignore: ["osx"]
+    url: "https://github.com/abjoru/blueberry-monad.git"
+    install-cmd: "stack install"
+  - name: dmenu
+    ignore: ["osx"]
+    url: "https://gitlab.com/dwt1/dmenu-distrotube.git"
+    install-cmd: "makepkg -cf"

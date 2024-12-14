@@ -5,6 +5,7 @@ module Dotf.Bundles (
   Updatable(..),
 
   loadBundles,
+  loadBundles',
   newBundle,
   listNewPackages,
   collectPackages,
@@ -15,6 +16,7 @@ module Dotf.Bundles (
   collectPostScripts
 ) where
 
+import           Control.Exception       (try)
 import           Data.String.Interpolate (i)
 import qualified Data.Yaml               as Y
 import           Dotf.Templates          (bundleFileTemplate)
@@ -112,9 +114,11 @@ instance Updatable GitPackage where
 -------------
 
 -- | Load application bundles from disk.
--- FIXME resolve git paths here so we don't have to do it everywhere!
-loadBundles :: IO [Bundle]
-loadBundles = listBundleFiles >>= mapM Y.decodeFileThrow
+loadBundles :: IO (Either Y.ParseException [Bundle])
+loadBundles = listBundleFiles >>= loadBundles'
+
+loadBundles' :: [FilePath] -> IO (Either Y.ParseException [Bundle])
+loadBundles' paths = try $ mapM Y.decodeFileThrow paths
 
 -- | Create a new application bundle with a given name.
 newBundle :: String -> IO ()

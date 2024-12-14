@@ -5,7 +5,7 @@ cabal-version: 2.2
 -- see: https://github.com/sol/hpack
 
 name:           dotf-hs
-version:        1.0.0.0
+version:        1.0.1.0
 description:    Please see the README on GitHub at <https://github.com/abjoru/dotf-hs#readme>
 homepage:       https://github.com/abjoru/dotf-hs#readme
 bug-reports:    https://github.com/abjoru/dotf-hs/issues
@@ -32,6 +32,7 @@ library
       Dotf.Templates
       Dotf.Types
       Dotf.Utils
+      Dotf.XMonad
       Tui
       Tui.Event.Bundles
       Tui.Event.Commit
@@ -39,11 +40,14 @@ library
       Tui.Event.Filter
       Tui.Event.Ignore
       Tui.Event.NewBundle
+      Tui.Event.XMonad
       Tui.Events
-      Tui.Popup
       Tui.State
+      Tui.Tab.Bundles
+      Tui.Tab.Dotfiles
+      Tui.Tab.Utils
+      Tui.Tab.XMonad
       Tui.Theme
-      Tui.Widgets
   other-modules:
       Paths_dotf_hs
   autogen-modules:
@@ -131,6 +135,8 @@ test-suite dotf-hs-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      AppConfigSpec
+      BundlesSpec
       Paths_dotf_hs
   autogen-modules:
       Paths_dotf_hs
@@ -153,6 +159,7 @@ test-suite dotf-hs-test
     , dotf-hs
     , extra
     , filepath
+    , hspec
     , microlens
     , microlens-mtl
     , microlens-th

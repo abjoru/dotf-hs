@@ -81,7 +81,7 @@ installBundles :: Dry -> Headless -> IO ()
 installBundles dry h = do
   dist    <- distro
   bundles <- loadBundles
-  let filtered = filter (matchHeadless h . bundleHeadless) bundles
+  let filtered = filter (matchHeadless h . bundleHeadless) $ fromRight [] bundles
       pkgs     = collectPackages filtered
       gits     = collectGitPackages dist filtered
       pre      = collectPreScripts filtered
@@ -98,7 +98,7 @@ updateBundles :: Dry -> Headless -> IO ()
 updateBundles dry h = do
   dist <- distro
   bundles <- loadBundles
-  let filtered = filter (matchHeadless h . bundleHeadless) bundles
+  let filtered = filter (matchHeadless h . bundleHeadless) $ fromRight [] bundles
       gits     = collectGitPackages dist filtered
       pkgIO    = whenM askUpdPkg $ updatePackages dry dist
       gitIO    = whenM askUpdGit (cloneGitPackages dry gits >> installGitPackages dry gits)

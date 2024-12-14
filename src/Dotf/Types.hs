@@ -7,23 +7,30 @@ module Dotf.Types (
   TrackedType(..),
   GitError(..),
   Answer(..),
+  AppCategory(..),
+  AppLauncher(..),
+  AppConfig(..),
 
   Dry,
   Headless,
   ErrorOrString,
   ErrorOrFilePaths,
   ErrorOrTracked,
+  ErrorOrBundles,
+  ErrorOrAppConfig,
 
-  Path(..)
+  Path(..),
+
+  emptyAppConfig
 ) where
 
-import           Data.Aeson.Key             (toString)
+import           Data.Aeson.Key             (toString, fromString)
 import           Data.Aeson.KeyMap          (keys)
 import qualified Data.ByteString.Lazy       as B
 import qualified Data.ByteString.Lazy.Char8 as C8
 import           Data.Char                  (isLetter, toLower)
 import           Data.Yaml                  (FromJSON (parseJSON), withObject,
-                                             (.!=), (.:), (.:?))
+                                             (.!=), (.:), (.:?), ParseException)
 import qualified Data.Yaml                  as Y
 
 -----------
@@ -67,7 +74,7 @@ data TrackedType
   deriving (Eq)
 
 data GitError = GitError {
-  errorCode    :: Int,
+  errorCode:: Int,
   errorMessage :: B.ByteString
 } deriving (Eq)
 
@@ -81,8 +88,35 @@ type ErrorOrFilePaths = Either GitError [FilePath]
 
 type ErrorOrTracked = Either GitError [TrackedType]
 
+type ErrorOrBundles = Either ParseException [Bundle]
+
+type ErrorOrAppConfig = Either ParseException AppConfig
+
 data Answer = Yes | No | DryRun
   deriving Show
+
+data AppCategory
+  = CFavorites
+  | CGames
+  | CInternet
+  | CSettings
+  | CSystem
+  | COffice
+  deriving (Eq, Ord)
+
+data AppLauncher = AppLauncher {
+  appName        :: String,
+  appDescription :: String
+} deriving (Show, Eq, Ord)
+
+data AppConfig = AppConfig {
+  _favorites :: [AppLauncher],
+  _games     :: [AppLauncher],
+  _internet  :: [AppLauncher],
+  _settings  :: [AppLauncher],
+  _system    :: [AppLauncher],
+  _office    :: [AppLauncher]
+} deriving (Show, Eq, Ord)
 
 -----------------
 -- Typeclasses --
@@ -109,6 +143,14 @@ instance Show TrackedType where
   show (Staged fp False)   = "(D) " ++ fp
   show (Unstaged fp True)  = fp
   show (Unstaged fp False) = "(D) " ++ fp
+
+instance Show AppCategory where
+  show CFavorites = "favorites"
+  show CGames     = "games"
+  show CInternet  = "internet"
+  show CSettings  = "settings"
+  show CSystem    = "system"
+  show COffice    = "office"
 
 instance Path TrackedType where
   toPath (Tracked fp)    = fp
@@ -152,3 +194,24 @@ instance FromJSON Bundle where
            <*> o .:? "pre-install"
            <*> o .:? "post-install"
   parseJSON _ = fail "Expected Object for Bundle value"
+
+instance FromJSON AppLauncher where
+  parseJSON = withObject "AppLauncher" $ \v -> do
+    AppLauncher <$> v .: "name"
+                <*> v .: "description"
+
+instance FromJSON AppConfig where
+  parseJSON = withObject "AppConfig" $ \v -> do
+    AppConfig <$> v .: fromString (show CFavorites)
+              <*> v .: fromString (show CGames)
+              <*> v .: fromString (show CInternet)
+              <*> v .: fromString (show CSettings)
+              <*> v .: fromString (show CSystem)
+              <*> v .: fromString (show COffice)
+
+---------------
+-- Functions --
+---------------
+
+emptyAppConfig :: AppConfig
+emptyAppConfig = AppConfig [] [] [] [] [] []

@@ -7,6 +7,7 @@ module Dotf.Utils (
   which,
   distro,
   appendToFile,
+  resolveAppConfig,
   listBundleFiles,
   listInstalledPackages,
   resolveBundleFile,
@@ -107,6 +108,9 @@ appendToFile line file = do
     else do
       withFile file WriteMode (\_ -> return ())
       appendFile file (line ++ "\n")
+
+resolveAppConfig :: IO FilePath
+resolveAppConfig = (</> "applications.yaml") <$> getXdgDirectory XdgConfig "xmonad"
 
 -- | List all bundle files.
 listBundleFiles :: IO [FilePath]
