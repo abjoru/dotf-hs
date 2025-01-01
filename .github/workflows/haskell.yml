@@ -11,11 +11,16 @@ permissions:
 
 jobs:
   build:
-
     runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Setup C_INCLUDE_PATH
+      run: |
+        brew install pcre
+        echo "C_INCLUDE_PATH=$(find /opt/homebrew/Cellar/pcre -name 'pcre.h' -exec dirname {} \;):$(xcrun --show-sdk-path)/usr/include/ffi" >> $GITHUB_ENV
+
     - uses: actions/setup-haskell@v1
       with:
         ghc-version: '8.10.3'
