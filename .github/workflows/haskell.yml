@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  build-macosx:
     runs-on: macos-latest
 
     steps:
@@ -36,5 +36,5 @@ jobs:
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v3
       with:
-        name: dotf-binary
+        name: dotf-osx-aarm64
         path: /Users/runner/.local/bin/dotf
