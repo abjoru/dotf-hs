@@ -4,24 +4,22 @@ module Tui.Events (
   syncUntracked,
 ) where
 
-import           Brick                (BrickEvent (VtyEvent), halt, modify)
-import qualified Brick.Widgets.Dialog as D
-import           Brick.Widgets.List   (listSelectedL)
-import           Graphics.Vty         (Event (EvKey),
-                                       Key (KBackTab, KChar, KEnter, KEsc))
-import           Lens.Micro           ((%~))
-import           Lens.Micro.Mtl       (use, zoom, (.=))
-import           Tui.Event.Bundles    (bundlesEvent)
-import           Tui.Event.Commit     (editCommitEvent)
-import           Tui.Event.Dotfiles   (dotfilesEvent)
-import           Tui.Event.Filter     (editFilterEvent)
-import           Tui.Event.Ignore     (editIgnoreEvent)
-import           Tui.Event.NewBundle  (newBundleEvent)
-import           Tui.Event.XMonad     (xmonadEvent)
-import           Tui.State            (DEvent, Focus (..), RName, Tab (..),
-                                       bundlesL, commitL, errorL, filterL,
-                                       focusL, ignoreL, newBundleL,
-                                       syncUntracked, tabL)
+import           Brick               (BrickEvent (VtyEvent), halt)
+import           Brick.Widgets.List  (listSelectedL)
+import           Graphics.Vty        (Event (EvKey),
+                                      Key (KBackTab, KChar, KEnter, KEsc))
+import           Lens.Micro.Mtl      (use, zoom, (.=))
+import           Tui.Event.Bundles   (bundlesEvent)
+import           Tui.Event.Commit    (editCommitEvent)
+import           Tui.Event.Dotfiles  (dotfilesEvent)
+import           Tui.Event.Filter    (editFilterEvent)
+import           Tui.Event.Ignore    (editIgnoreEvent)
+import           Tui.Event.NewBundle (newBundleEvent)
+import           Tui.Event.XMonad    (xmonadEvent)
+import           Tui.State           (DEvent, Focus (..), RName, Tab (..),
+                                      bundlesL, commitL, errorL, filterL,
+                                      focusL, ignoreL, newBundleL,
+                                      syncUntracked, tabL)
 
 --------------------
 -- Event Handlers --

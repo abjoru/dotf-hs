@@ -1,5 +1,14 @@
 {-# LANGUAGE FlexibleInstances #-}
-module Tui.Tab.Utils where
+module Tui.Tab.Utils (
+  ToWidget (..),
+  ver,
+  tip,
+  title,
+  filterTitle,
+  pkgColAlign,
+  tabLine,
+  tabSelector
+) where
 
 import           Brick               (Padding (Max, Pad), Widget, hBox, padLeft,
                                       padRight, str, withAttr, (<+>))
