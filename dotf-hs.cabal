@@ -160,6 +160,7 @@ test-suite dotf-hs-test
     , extra
     , filepath
     , hspec
+    , hspec-discover
     , microlens
     , microlens-mtl
     , microlens-th

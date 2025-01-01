@@ -125,7 +125,7 @@ newBundle :: String -> IO ()
 newBundle name = do
   base <- getXdgDirectory XdgConfig "dotf"
 
-  let configDir = base </> "bundles"
+  let configDir  = base </> "bundles"
       configFile = configDir </> (name ++ ".yaml")
 
   createDirectoryIfMissing True configDir

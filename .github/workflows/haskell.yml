@@ -12,7 +12,7 @@ permissions:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: macos-12
 
     steps:
     - uses: actions/checkout@v4
@@ -41,3 +41,9 @@ jobs:
       run: cabal build --enable-tests --enable-benchmarks all
     - name: Run tests
       run: cabal test all
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: dotf
+        path: dist-newstyle/build/*/ghc-*/dotf

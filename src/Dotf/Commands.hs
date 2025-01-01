@@ -62,7 +62,7 @@ checkRequirements = distro >>= osWhich
 
 -- | Install required dependencies for the underlying
 -- OS. In the case of 'Arch Linux', this would be the
--- package manager 'paru', where on 'OSX' it would be
+-- package manager 'paru', and on 'OSX' it would be
 -- the package manager 'homebrew'.
 installRequirements :: Dry -> IO ()
 installRequirements d = distro >>= osInstall

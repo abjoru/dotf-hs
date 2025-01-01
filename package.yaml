@@ -89,3 +89,4 @@ tests:
     dependencies:
     - dotf-hs
     - hspec
+    - hspec-discover
