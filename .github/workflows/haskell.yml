@@ -15,40 +15,26 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Setup C_INCLUDE_PATH
       run: |
         brew install pcre
         echo "C_INCLUDE_PATH=$(find /opt/homebrew/Cellar/pcre -name 'pcre.h' -exec dirname {} \;):$(xcrun --show-sdk-path)/usr/include/ffi" >> $GITHUB_ENV
 
-    - uses: actions/setup-haskell@v1
+    - name: Setup Stack
+      uses: freckle/stack-action@v5
       with:
-        ghc-version: '8.10.3'
-        cabal-version: '3.2'
+        ghc-version: '9.4.8'
 
-    - name: Cache
-      uses: actions/cache@v3
-      env:
-        cache-name: cache-cabal
-      with:
-        path: ~/.cabal
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/*.cabal') }}-${{ hashFiles('**/cabal.project') }}
-        restore-keys: |
-          ${{ runner.os }}-build-${{ env.cache-name }}-
-          ${{ runner.os }}-build-
-          ${{ runner.os }}-
-
-    - name: Install dependencies
+    - name: Build with Stack
       run: |
-        cabal update
-        cabal build --only-dependencies --enable-tests --enable-benchmarks
-    - name: Build
-      run: cabal build --enable-tests --enable-benchmarks all
-    - name: Run tests
-      run: cabal test all
+        stack setup
+        stack build --copy-bins
 
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v3
       with:
-        name: dotf
-        path: dist-newstyle/build/*/ghc-*/dotf
+        name: dotf-binary
+        path: $(stack path --local-bin)/dotf

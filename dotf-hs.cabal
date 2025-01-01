@@ -63,7 +63,7 @@ library
       ConfigFile
     , MissingH
     , aeson
-    , base >=4.7 && <5
+    , base
     , brick
     , bytestring
     , containers
@@ -105,7 +105,7 @@ executable dotf
       ConfigFile
     , MissingH
     , aeson
-    , base >=4.7 && <5
+    , base
     , brick
     , bytestring
     , containers
@@ -151,7 +151,7 @@ test-suite dotf-hs-test
       ConfigFile
     , MissingH
     , aeson
-    , base >=4.7 && <5
+    , base
     , brick
     , bytestring
     , containers
