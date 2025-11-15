@@ -33,7 +33,7 @@ jobs:
         stack build --copy-bins
 
     - name: Upload Build Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dotf-osx-aarm64
         path: /Users/runner/.local/bin/dotf
@@ -60,7 +60,7 @@ jobs:
         stack build --copy-bins
 
     - name: Upload Build Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dotf-linux-x86_64
         path: /home/runner/.local/bin/dotf
