@@ -142,8 +142,8 @@ instance Show Tab where
   show XMonadTab  = "XMonad [3]"
 
 -- | Defines a table row for OS packages.
--- name, arch, osx, deb
-data PkgRow = PkgRow String String String String
+-- name, arch, osx, cask, deb
+data PkgRow = PkgRow String String String String String
 
 -- | Defines a table row for GIT packages.
 -- name, url, branch
@@ -256,8 +256,8 @@ errMsg msg err = msg ++ breakLines 45 (show err)
 -- | Create TUI table rows for packages in provided bundles.
 mkPkgRows :: [Bundle] -> [PkgRow]
 mkPkgRows bs = map mkRow $ collectNamedPackages bs
- where mkRow (NamedPackage n (Package a b c)) =
-         PkgRow n (fromMaybe "" a) (fromMaybe "" b) (fromMaybe "" c)
+ where mkRow (NamedPackage n (Package a b c d)) =
+         PkgRow n (fromMaybe "" a) (fromMaybe "" b) (fromMaybe "" c) (fromMaybe "" d)
 
 -- | Create TUI table rows for GIT packages in provided bundles.
 -- FIXME show ignore list for GIT packages in TUI

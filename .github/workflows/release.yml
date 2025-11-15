@@ -1,13 +1,12 @@
-name: Haskell CI
+name: Release dotf
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    tags:
+      - 'v*'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-macosx:
@@ -65,3 +64,32 @@ jobs:
       with:
         name: dotf-linux-x86_64
         path: /home/runner/.local/bin/dotf
+
+  release:
+    needs: [build-macosx, build-linux]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download macOS artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: dotf-osx-aarm64
+        path: artifacts/dotf-osx-aarm64
+
+    - name: Download Linux artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: dotf-linux-x86_64
+        path: artifacts/dotf-linux-x86_64
+
+    - name: Prepare artifacts
+      run: |
+        mv artifacts/dotf-osx-aarm64/dotf artifacts/dotf-osx-aarm64
+        mv artifacts/dotf-linux-x86_64/dotf artifacts/dotf-linux-x86_64
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          artifacts/dotf-osx-aarm64
+          artifacts/dotf-linux-x86_64

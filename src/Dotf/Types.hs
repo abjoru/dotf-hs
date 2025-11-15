@@ -37,13 +37,22 @@ import qualified Data.Yaml                  as Y
 -- Types --
 -----------
 
-data Distro = Arch | Osx | Deb | Unsupported
+data Distro = Arch | Osx | Cask | Deb | Unsupported
 
 data Package = Package {
   arch :: Maybe String,
   osx  :: Maybe String,
+  cask :: Maybe String,
   deb  :: Maybe String
 } deriving (Show, Eq, Ord)
+
+-- FIXME new package structure with dependencies!
+-- This will replace the simple 'String' entry in
+-- the 'Package' data structure above.
+--data App = App {
+  --appName :: String,
+  --appDeps :: [String]
+--}
 
 data NamedPackage = NamedPackage String Package
   deriving (Show, Eq, Ord)
@@ -105,8 +114,8 @@ data AppCategory
   deriving (Eq, Ord)
 
 data AppLauncher = AppLauncher {
-  appName        :: String,
-  appDescription :: String
+  launcherName        :: String,
+  launcherDescription :: String
 } deriving (Show, Eq, Ord)
 
 data AppConfig = AppConfig {
@@ -164,6 +173,7 @@ instance FromJSON Package where
   parseJSON (Y.Object o) =
     Package <$> o .:? "arch"
             <*> o .:? "osx"
+            <*> o .:? "cask"
             <*> o .:? "deb"
   parseJSON v = fail $ "Expected Object for Package value: " ++ show v
 

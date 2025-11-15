@@ -34,6 +34,8 @@ bundleFileTemplate name =
         \#arch: arch-packagename
         \# [Optional] Defines the homebrew package name if any
         \#osx: osx-packagename
+        \# [Optional] Defines the homebrew cask package urls if any
+        \#cask: osx-cask-package-url
         \# [Optional] Defines the deb package name if any
         \#deb: deb-packagename
 
