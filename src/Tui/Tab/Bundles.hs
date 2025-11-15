@@ -23,17 +23,18 @@ bundleHelpLine2 :: [(String, String)]
 bundleHelpLine2 = [ ("n:", " New Bundle "), ("e:", " Edit")]
 
 pkgHeaderRow :: PkgRow
-pkgHeaderRow = PkgRow "Name" "Arch" "OSX" "Deb"
+pkgHeaderRow = PkgRow "Name" "Arch" "OSX" "Cask" "Deb"
 
 gitHeaderRow :: GitRow
 gitHeaderRow = GitRow "Name" "URL" "Branch"
 
 pkgColWidths :: [PkgRow] -> [Int]
 pkgColWidths rows =
-  [ maximum . map (\(PkgRow n _ _ _) -> length n + 2) $ pkgHeaderRow : rows
-  , maximum . map (\(PkgRow _ a _ _) -> length a + 2) $ pkgHeaderRow : rows
-  , maximum . map (\(PkgRow _ _ b _) -> length b + 2) $ pkgHeaderRow : rows
-  , maximum . map (\(PkgRow _ _ _ c) -> length c + 2) $ pkgHeaderRow : rows
+  [ maximum . map (\(PkgRow n _ _ _ _) -> length n + 2) $ pkgHeaderRow : rows
+  , maximum . map (\(PkgRow _ a _ _ _) -> length a + 2) $ pkgHeaderRow : rows
+  , maximum . map (\(PkgRow _ _ b _ _) -> length b + 2) $ pkgHeaderRow : rows
+  , maximum . map (\(PkgRow _ _ _ c _) -> length c + 2) $ pkgHeaderRow : rows
+  , maximum . map (\(PkgRow _ _ _ _ d) -> length d + 2) $ pkgHeaderRow : rows
   ]
 
 gitColAlign :: [T.ColumnAlignment]
@@ -59,8 +60,8 @@ bundleTab s = drawUi (_newBundle s)
        middle = left <+> right
        bottom True  = newBundleComp s <=> bundleHelp
        bottom False = bundleHelp
-       left = bc <=> sc
-       right = pc <=> gc
+       left = bc <=> sc <=> gc
+       right = pc
        bc = bundleList s (hasFocus FBundleList s)
        sc = scriptList s (hasFocus FScriptList s)
        pc = packageList s (hasFocus FPackageList s)
@@ -79,12 +80,13 @@ packageList s focus =
    in borderWithLabel listTitle $ headers <=> L.renderList (mkRow rowWidths) focus rowList
  where
    mkRow w _ r = hBox $ T.alignColumns pkgColAlign w (rRow r)
-   rRow (PkgRow n a b c) = [str n, str a, str b, str c]
-   rHead (PkgRow n a b c) = [ withAttr attrTitle $ str n
-                            , withAttr attrTitle $ str a
-                            , withAttr attrTitle $ str b
-                            , withAttr attrTitle $ str c
-                            ]
+   rRow (PkgRow n a b c d) = [str n, str a, str b, str c, str d]
+   rHead (PkgRow n a b c d) = [ withAttr attrTitle $ str n
+                              , withAttr attrTitle $ str a
+                              , withAttr attrTitle $ str b
+                              , withAttr attrTitle $ str c
+                              , withAttr attrTitle $ str d
+                              ]
 
 gitPackageList :: State -> Bool -> Widget RName
 gitPackageList s focus =

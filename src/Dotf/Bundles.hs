@@ -20,7 +20,7 @@ import           Control.Exception       (try)
 import           Data.String.Interpolate (i)
 import qualified Data.Yaml               as Y
 import           Dotf.Templates          (bundleFileTemplate)
-import           Dotf.Types              (Bundle (..), Distro (Arch, Deb, Osx),
+import           Dotf.Types              (Bundle (..), Distro (..),
                                           GitPackage (GitPackage, gitName, gitSkip),
                                           NamedPackage (..), Package (Package))
 import           Dotf.Utils              (distro, getGitInstallPath,
@@ -191,7 +191,8 @@ packages b = map (\(NamedPackage _ p) -> p) $ bundleOsPackages b
 
 filterOsPackages :: Distro -> [Package] -> [String]
 filterOsPackages dist = foldr (find dist) []
-  where find Arch (Package (Just p) _ _) xs = p : xs
-        find Osx (Package _ (Just p) _) xs  = p : xs
-        find Deb (Package _ _ (Just p)) xs  = p : xs
-        find _ _ xs                         = xs
+  where find Arch (Package (Just p) _ _ _) xs = p : xs
+        find Osx (Package _ (Just p) _ _) xs  = p : xs
+        find Cask (Package _ _ (Just p) _) xs = p : xs
+        find Deb (Package _ _ _ (Just p)) xs  = p : xs
+        find _ _ xs                           = xs

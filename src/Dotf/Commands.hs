@@ -99,8 +99,9 @@ updateBundles dry h = do
   dist <- distro
   bundles <- loadBundles
   let filtered = filter (matchHeadless h . bundleHeadless) $ fromRight [] bundles
+      pkgs     = collectPackages filtered
       gits     = collectGitPackages dist filtered
-      pkgIO    = whenM askUpdPkg $ updatePackages dry dist
+      pkgIO    = whenM askUpdPkg $ installPackages dry dist pkgs
       gitIO    = whenM askUpdGit (cloneGitPackages dry gits >> installGitPackages dry gits)
 
   pkgIO >> gitIO
@@ -292,19 +293,19 @@ installPackages :: Dry -> Distro -> [Package] -> IO ()
 installPackages True d pkgs = toInstallProcess d pkgs >>= print
 installPackages _ d pkgs    = toInstallProcess d pkgs >>= PT.runProcess >> pure ()
 
-updatePackages :: Dry -> Distro -> IO ()
-updatePackages dry Arch = do
-  let p = PT.proc "paru" ["-Syyu"]
-  if dry
-    then print p
-    else void $ PT.runProcess p
-updatePackages dry Osx = do
-  let p1 = PT.proc "brew" ["update"]
-      p2 = PT.proc "brew" ["upgrade"]
-  if dry
-    then print p1 >> print p2
-    else void (PT.runProcess p1 >> PT.runProcess p2)
-updatePackages _ _ = putStrLn "Unable to update packages!"
+-- updatePackages :: Dry -> Distro -> IO ()
+-- updatePackages dry Arch = do
+  -- let p = PT.proc "paru" ["-Syyu"]
+  -- if dry
+    -- then print p
+    -- else void $ PT.runProcess p
+-- updatePackages dry Osx = do
+  -- let p1 = PT.proc "brew" ["update"]
+      -- p2 = PT.proc "brew" ["upgrade"]
+  -- if dry
+    -- then print p1 >> print p2
+    -- else void (PT.runProcess p1 >> PT.runProcess p2)
+-- updatePackages _ _ = putStrLn "Unable to update packages!"
 
 cloneGitPackages :: Dry -> [GitPackage] -> IO ()
 cloneGitPackages True pkgs = forM_ pkgs (toCloneProcess >=> print)
