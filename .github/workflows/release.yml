@@ -9,36 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  build-macosx:
-    runs-on: macos-latest
-
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Setup C_INCLUDE_PATH
-      run: |
-        brew install pcre
-        echo "C_INCLUDE_PATH=$(find /opt/homebrew/Cellar/pcre -name 'pcre.h' -exec dirname {} \;):$(xcrun --show-sdk-path)/usr/include/ffi" >> $GITHUB_ENV
-
-    - name: Setup Stack
-      uses: freckle/stack-action@v5
-      with:
-        ghc-version: '9.4.8'
-
-    - name: Build with Stack
-      run: |
-        stack setup
-        stack build --copy-bins
-
-    - name: Upload Build Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: dotf-osx-aarm64
-        path: /Users/runner/.local/bin/dotf
-
-  build-linux:
+  source-archive:
     runs-on: ubuntu-latest
 
     steps:
@@ -46,50 +17,18 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Install system dependencies
-      run: sudo apt-get update && sudo apt-get install -y libpcre3-dev libffi-dev
-
-    - name: Setup Stack
-      uses: freckle/stack-action@v5
-      with:
-        ghc-version: '9.4.8'
-
-    - name: Build with Stack
+    - name: Determine versions
       run: |
-        stack setup
-        stack build --copy-bins
+        TAG_NAME="${GITHUB_REF_NAME}"
+        VERSION="${TAG_NAME#v}"
+        echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
+        echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
-    - name: Upload Build Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: dotf-linux-x86_64
-        path: /home/runner/.local/bin/dotf
-
-  release:
-    needs: [build-macosx, build-linux]
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Download macOS artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: dotf-osx-aarm64
-        path: artifacts/dotf-osx-aarm64
-
-    - name: Download Linux artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: dotf-linux-x86_64
-        path: artifacts/dotf-linux-x86_64
-
-    - name: Prepare artifacts
+    - name: Create source archive
       run: |
-        mv artifacts/dotf-osx-aarm64/dotf artifacts/dotf-osx-aarm64
-        mv artifacts/dotf-linux-x86_64/dotf artifacts/dotf-linux-x86_64
+        git archive --format=tar.gz --prefix="dotf-hs-${VERSION}/" -o "dotf-hs-${VERSION}.tar.gz" "${GITHUB_REF_NAME}"
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
-        files: |
-          artifacts/dotf-osx-aarm64
-          artifacts/dotf-linux-x86_64
+        files: dotf-hs-${{ env.VERSION }}.tar.gz

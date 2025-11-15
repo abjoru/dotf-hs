@@ -1,6 +1,6 @@
 # dotf-hs
 
-![Version](https://img.shields.io/badge/version-1.0.1.0-blue)
+![Version](https://img.shields.io/badge/version-1.0.2-blue)
 
 `dotf-hs` is a Haskell implementation of the dotfiles workflow I use on Linux and macOS. It keeps a bare Git repository in `$HOME/.dotf`, installs operating-system packages declared in YAML bundles, and provides a Brick/Vty TUI for reviewing tracked/untracked files, XMonad launchers, and bundle definitions.
 
