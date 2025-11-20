@@ -9,6 +9,40 @@ permissions:
   contents: write
 
 jobs:
+  build-macosx:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup C_INCLUDE_PATH
+      run: |
+        brew install pcre
+        echo "C_INCLUDE_PATH=$(find /opt/homebrew/Cellar/pcre -name 'pcre.h' -exec dirname {} \;):$(xcrun --show-sdk-path)/usr/include/ffi" >> $GITHUB_ENV
+
+    - name: Setup Stack
+      uses: freckle/stack-action@v5
+      with:
+        ghc-version: '9.4.8'
+
+    - name: Build with Stack
+      run: |
+        stack setup
+        stack build --copy-bins
+
+    - name: Prepare binary artifact
+      run: |
+        mkdir -p artifacts
+        cp /Users/runner/.local/bin/dotf artifacts/dotf-macos-arm64
+
+    - name: Upload macOS artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: dotf-macos-arm64
+        path: artifacts/dotf-macos-arm64
+
   source-archive:
     runs-on: ubuntu-latest
 
@@ -28,7 +62,43 @@ jobs:
       run: |
         git archive --format=tar.gz --prefix="dotf-hs-${VERSION}/" -o "dotf-hs-${VERSION}.tar.gz" "${GITHUB_REF_NAME}"
 
+    - name: Upload source archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: dotf-source-archive
+        path: dotf-hs-${{ env.VERSION }}.tar.gz
+
+  publish-release:
+    needs: [source-archive, build-macosx]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Determine versions
+      run: |
+        TAG_NAME="${GITHUB_REF_NAME}"
+        VERSION="${TAG_NAME#v}"
+        echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
+        echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+    - name: Download source archive
+      uses: actions/download-artifact@v4
+      with:
+        name: dotf-source-archive
+
+    - name: Download macOS binary
+      uses: actions/download-artifact@v4
+      with:
+        name: dotf-macos-arm64
+
+    - name: Prepare release assets
+      run: |
+        mv dotf-source-archive/dotf-hs-${VERSION}.tar.gz dotf-hs-${VERSION}.tar.gz
+        mv dotf-macos-arm64/dotf-macos-arm64 dotf-${VERSION}-macos-arm64
+
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
-        files: dotf-hs-${{ env.VERSION }}.tar.gz
+        files: |
+          dotf-hs-${{ env.VERSION }}.tar.gz
+          dotf-${{ env.VERSION }}-macos-arm64
+
